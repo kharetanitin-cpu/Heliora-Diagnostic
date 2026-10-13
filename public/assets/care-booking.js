@@ -1,8 +1,42 @@
-let catalogue = [];
+// HELIORA CARE — BOOKING PAGE
+// Staging version: displays live tests and slots.
+// Actual booking submissions remain disabled.
 
-const chosen = new Set();
 const el = id => document.getElementById(id);
 
+let catalogue = [];
+const chosen = new Set();
+
+let availableSlots = [];
+let slotsRequestId = 0;
+
+// Convert 24-hour time to 12-hour display.
+function displayTime(time) {
+  const [hour, minute] = time.split(":").map(Number);
+
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+// Get today's date in India.
+function indiaToday() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(
+    parts.map(part => [part.type, part.value])
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+// Safely display text in HTML.
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -13,7 +47,8 @@ function escapeHTML(value) {
   }[char]));
 }
 
-async function loadCatalogue() {
+// Load diagnostic tests from Cloudflare D1.
+async function loadTests() {
   el("tests").textContent = "Loading diagnostic tests...";
 
   try {
@@ -28,80 +63,167 @@ async function loadCatalogue() {
     const data = await response.json();
 
     if (!Array.isArray(data.tests)) {
-      throw new Error("Invalid catalogue response");
+      throw new Error("Invalid test catalogue");
     }
 
-    catalogue = data.tests.map(test => ({
-      id: test.id,
-      name: test.test_name,
-      category: test.category || "Diagnostic Test",
-      price: test.price,
-      home: Number(test.home_collection) === 1
-    }));
-
-    render();
+    catalogue = data.tests;
+    renderTests();
 
   } catch (error) {
-    console.error("Catalogue loading failed:", error);
-
     el("tests").textContent =
-      "Unable to load diagnostic tests. Please refresh the page.";
+      "Unable to load diagnostic tests. Please try again later.";
   }
 }
 
-function render() {
-  const search = el("search").value.toLowerCase();
+// Display tests with checkboxes.
+function renderTests() {
+  const search = el("search").value.trim().toLowerCase();
 
   const filtered = catalogue.filter(test =>
-    test.name.toLowerCase().includes(search)
+    test.test_name.toLowerCase().includes(search)
   );
 
-  el("tests").innerHTML = filtered.map(test => {
+  el("tests").innerHTML = filtered.length
+    ? filtered.map(test => `
+        <label class="test">
+          <input
+            type="checkbox"
+            data-test-id="${test.id}"
+            ${chosen.has(test.id) ? "checked" : ""}
+          >
 
-    const checked = chosen.has(test.id) ? "checked" : "";
+          <span>
+            <b>${escapeHTML(test.test_name)}</b>
 
-    const availability = test.home
-      ? "Home collection eligible"
-      : "Centre visit only";
+            <small>
+              ${escapeHTML(test.category || "Diagnostic test")}
+              · Centre visit
+            </small>
+          </span>
+        </label>
+      `).join("")
+    : "<p>No matching tests found.</p>";
 
-    return `
-      <label class="test">
-        <input
-          type="checkbox"
-          data-test-id="${test.id}"
-          ${checked}
-        >
-        <span>
-          <b>${escapeHTML(test.name)}</b>
-          <small>
-            ${escapeHTML(test.category)} · ${availability}
-          </small>
-        </span>
-      </label>
-    `;
+  renderSummary();
+}
 
-  }).join("") || "<p>No matching tests.</p>";
+// Update booking summary.
+function renderSummary() {
+  el("visit").textContent = "Centre visit";
 
-  const selectedTests = catalogue.filter(test =>
+  const selected = catalogue.filter(test =>
     chosen.has(test.id)
   );
 
-  el("selected").innerHTML = selectedTests.length
-    ? "<ul>" +
-      selectedTests.map(test =>
-        `<li>${escapeHTML(test.name)}</li>`
-      ).join("") +
-      "</ul>"
-    : "No tests selected yet.";
+  if (!selected.length) {
+    el("selected").textContent = "No tests selected yet.";
+    return;
+  }
 
-  el("visit").textContent = el("type").value;
+  const list = document.createElement("ul");
+
+  for (const test of selected) {
+    const item = document.createElement("li");
+    item.textContent = test.test_name;
+    list.appendChild(item);
+  }
+
+  el("selected").replaceChildren(list);
 }
 
-el("tests").addEventListener("change", event => {
+// Retrieve live appointment availability.
+async function loadSlots() {
+  const date = el("date").value;
+  const timeSelect = el("time");
+  const message = el("slot-message");
 
+  // Prevent an older request from replacing newer results.
+  const requestId = ++slotsRequestId;
+
+  availableSlots = [];
+
+  timeSelect.disabled = true;
+  timeSelect.replaceChildren(new Option("Choose a time", ""));
+
+  if (!date) {
+    message.textContent = "Choose a date to check availability.";
+    return;
+  }
+
+  if (date < indiaToday()) {
+    message.textContent = "Please choose today or a future date.";
+    return;
+  }
+
+  message.textContent = "Checking appointment availability...";
+
+  try {
+    const response = await fetch(
+      `/api/slots?date=${encodeURIComponent(date)}`,
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to retrieve slots");
+    }
+
+    const data = await response.json();
+
+    if (requestId !== slotsRequestId) {
+      return;
+    }
+
+    if (!Array.isArray(data.slots)) {
+      throw new Error("Invalid availability response");
+    }
+
+    availableSlots = data.slots;
+
+    let availableCount = 0;
+
+    for (const slot of availableSlots) {
+      const option = document.createElement("option");
+
+      option.value = slot.time;
+
+      if (slot.available) {
+        option.textContent =
+          `${displayTime(slot.time)} — ${slot.remaining} available`;
+
+        availableCount++;
+      } else {
+        option.textContent =
+          `${displayTime(slot.time)} — Unavailable`;
+
+        option.disabled = true;
+      }
+
+      timeSelect.appendChild(option);
+    }
+
+    timeSelect.disabled = availableCount === 0;
+
+    message.textContent = availableCount
+      ? `${availableCount} appointment times available. Maximum 5 bookings per slot.`
+      : "No appointment times are available for this date.";
+
+  } catch (error) {
+    if (requestId !== slotsRequestId) {
+      return;
+    }
+
+    timeSelect.disabled = true;
+
+    message.textContent =
+      "Unable to check availability. Please try again.";
+  }
+}
+
+// Select or deselect diagnostic tests.
+el("tests").addEventListener("change", event => {
   const checkbox = event.target;
 
-  if (!checkbox.matches("[data-test-id]")) {
+  if (!checkbox.matches("input[data-test-id]")) {
     return;
   }
 
@@ -113,70 +235,81 @@ el("tests").addEventListener("change", event => {
     chosen.delete(id);
   }
 
-  render();
+  renderTests();
 });
 
-el("search").addEventListener("input", render);
+// Search diagnostic tests.
+el("search").addEventListener("input", renderTests);
 
-el("type").addEventListener("change", () => {
+// Reload slots when the patient changes the date.
+el("date").addEventListener("change", loadSlots);
 
-  const isHome =
-    el("type").value === "Home sample collection";
+// Keep the appointment type set to centre visit.
+el("type").value = "Centre visit";
 
-  el("addressblock").classList.toggle("hidden", !isHome);
+// Set the earliest selectable date.
+el("date").min = indiaToday();
 
-  render();
-});
-
-el("date").min = new Date(
-  Date.now() - new Date().getTimezoneOffset() * 60000
-).toISOString().slice(0, 10);
-
-el("booking").addEventListener("submit", event => {
-
+// Handle demo booking preview.
+el("booking").addEventListener("submit", async event => {
   event.preventDefault();
 
+  const result = el("result");
+  result.replaceChildren();
+
   if (!chosen.size) {
-    alert("Please select at least one test.");
+    alert("Please select at least one diagnostic test.");
     return;
   }
 
-  const selectedTests = catalogue.filter(test =>
-    chosen.has(test.id)
+  const date = el("date").value;
+  const time = el("time").value;
+
+  if (!date || !time) {
+    alert("Please select an appointment date and time.");
+    return;
+  }
+
+  // Refresh availability before showing the preview.
+  await loadSlots();
+
+  const slot = availableSlots.find(item =>
+    item.time === time && item.available
   );
 
-  const isHome =
-    el("type").value === "Home sample collection";
-
-  if (isHome && selectedTests.some(test => !test.home)) {
+  if (!slot) {
     alert(
-      "Some selected tests are available for centre visits only."
+      "This appointment time is no longer available. Please select another time."
     );
     return;
   }
 
-  if (isHome && !el("address").value.trim()) {
-    alert("Please enter a collection address.");
-    return;
-  }
+  // Restore the selected time after refreshing.
+  el("time").value = time;
 
-  const reference =
-    "DEMO-" + Math.floor(100000 + Math.random() * 900000);
+  const notice = document.createElement("div");
+  notice.className = "notice success";
 
-  el("result").innerHTML = `
-    <div class="notice success">
-      <b>Preview created: ${reference}</b>
-      <br>
-      This is not a confirmed appointment.
-      No email has been sent and no booking has been
-      saved to the database.
-    </div>
-  `;
+  const heading = document.createElement("b");
+  heading.textContent = "Booking Preview";
 
-  el("result").scrollIntoView({
+  const details = document.createElement("p");
+  details.textContent =
+    `${date} at ${displayTime(time)} — Centre visit`;
+
+  const warning = document.createElement("p");
+  warning.textContent =
+    "This is a demonstration only. No appointment has been created, no information has been saved, and no confirmation email has been sent.";
+
+  notice.append(heading, details, warning);
+
+  result.appendChild(notice);
+
+  result.scrollIntoView({
     behavior: "smooth",
     block: "nearest"
   });
 });
 
-loadCatalogue();
+// Initialize booking page.
+loadTests();
