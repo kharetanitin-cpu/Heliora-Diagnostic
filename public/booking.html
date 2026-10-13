@@ -1,1 +1,210 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Book a Test | Heliora Diagnostic</title><link rel="stylesheet" href="assets/care.css"></head><body><header class="top"><a class="logo" href="index.html"><img src="assets/heliora-emblem.jpg" alt="Heliora logo"> HELIORA <span style="color:#159a88">CARE</span></a><nav><a href="index.html">Home</a></nav></header><main class="shell"><section class="hero"><span class="pill">Diagnostic appointments made easier</span><h1>Book your tests with confidence.</h1><p>Select multiple tests, choose a centre visit or home sample collection, and request your preferred appointment time.</p><div class="notice"><b>DEMO ONLY:</b> This prototype does not send emails, save bookings to a server, or accept real patient appointments. Please use fictional information.</div></section><div class="grid"><form id="booking" class="card"><h2>Request an appointment</h2><p class="muted">Your request will be reviewed by the Heliora team before confirmation in the future live version.</p><label for="type">Appointment type</label><select id="type"><option value="Centre visit">Visit Heliora Diagnostic</option><option value="Home sample collection">Home sample collection</option></select><label for="search">Find tests</label><input id="search" placeholder="Search CBC, thyroid, ECG..."><div id="tests" class="tests" style="margin-top:12px"></div><div class="row"><div><label for="date">Preferred date</label><input id="date" type="date" required></div><div><label for="time">Preferred time</label><select id="time" required><option value="">Choose a time</option><option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option></select></div></div><div class="row"><div><label for="name">Patient name</label><input id="name" required placeholder="Demo Patient"></div><div><label for="phone">Mobile number</label><input id="phone" inputmode="tel" required placeholder="10-digit mobile"></div></div><label for="email">Email address</label><input id="email" type="email" required placeholder="demo@example.com"><div id="addressblock" class="hidden"><label for="address">Home collection address</label><textarea id="address" rows="3" placeholder="Address for collection (demo only)"></textarea></div><label for="notes">Notes (optional; do not enter medical details)</label><textarea id="notes" rows="2"></textarea><p class="mini muted">No medical reports or sensitive medical history should be entered in this prototype.</p><button class="btn" type="submit">Preview Booking Request →</button><div id="result" aria-live="polite"></div></form><aside><div class="card summary"><h3>Booking summary</h3><p id="visit">Centre visit</p><div id="selected" class="muted">No tests selected yet.</div><hr style="border:0;border-top:1px solid #deebef;margin:20px 0"><p class="mini muted">Prices will appear once the verified Heliora test catalogue is provided.</p><p><strong>Booking status:</strong> <span class="status">Pending review</span></p><p class="mini muted">This is a visual prototype. Live bookings, notifications and staff approvals will be added after backend setup.</p></div></aside></div></main><footer class="foot">Heliora Diagnostic · Accurate Care. Better Health. Brighter Tomorrow.</footer><script src="assets/care-booking.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Book a Test | Heliora Diagnostic</title>
+
+  <link rel="stylesheet" href="assets/care.css">
+</head>
+
+<body>
+
+<header class="top">
+  <a class="logo" href="index.html">
+    <img src="assets/heliora-emblem.jpg" alt="Heliora logo">
+    HELIORA <span style="color:#159a88">CARE</span>
+  </a>
+
+  <nav>
+    <a href="index.html">Home</a>
+  </nav>
+</header>
+
+<main class="shell">
+
+  <section class="hero">
+
+    <span class="pill">Diagnostic appointments made easier</span>
+
+    <h1>Book your tests with confidence.</h1>
+
+    <p>
+      Select your diagnostic tests, choose a convenient date,
+      and view available appointment times at Heliora Diagnostic.
+    </p>
+
+    <div class="notice">
+      <b>DEMO ONLY:</b>
+      Appointment availability is retrieved from our staging database,
+      but this form does not create real bookings or send emails.
+      Please use fictional patient information.
+    </div>
+
+  </section>
+
+  <div class="grid">
+
+    <form id="booking" class="card">
+
+      <h2>Book an appointment</h2>
+
+      <p class="muted">
+        Select your tests and preferred appointment time.
+        Live appointment booking will be enabled after testing.
+      </p>
+
+      <label for="type">Appointment type</label>
+
+      <select id="type">
+        <option value="Centre visit">Visit Heliora Diagnostic</option>
+        <option value="Home sample collection" disabled>
+          Home Sample Collection — Coming Soon
+        </option>
+      </select>
+
+      <label for="search">Find tests</label>
+
+      <input
+        id="search"
+        placeholder="Search CBC, thyroid, ECG..."
+      >
+
+      <div
+        id="tests"
+        class="tests"
+        style="margin-top:12px"
+      ></div>
+
+      <div class="row">
+
+        <div>
+          <label for="date">Appointment date</label>
+
+          <input
+            id="date"
+            type="date"
+            required
+          >
+        </div>
+
+        <div>
+          <label for="time">Available appointment time</label>
+
+          <select id="time" required disabled>
+            <option value="">Select a date first</option>
+          </select>
+
+          <p
+            id="slot-message"
+            class="mini muted"
+            aria-live="polite"
+          >
+            Choose a date to check availability.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="row">
+
+        <div>
+          <label for="name">Patient name</label>
+
+          <input
+            id="name"
+            required
+            placeholder="Demo Patient"
+          >
+        </div>
+
+        <div>
+          <label for="phone">Mobile number</label>
+
+          <input
+            id="phone"
+            inputmode="tel"
+            required
+            placeholder="10-digit mobile"
+          >
+        </div>
+
+      </div>
+
+      <label for="email">Email address</label>
+
+      <input
+        id="email"
+        type="email"
+        required
+        placeholder="demo@example.com"
+      >
+
+      <label for="notes">Notes (optional)</label>
+
+      <textarea
+        id="notes"
+        rows="2"
+        placeholder="Do not enter medical details"
+      ></textarea>
+
+      <p class="mini muted">
+        Do not enter real patient information or sensitive medical
+        history during testing.
+      </p>
+
+      <button class="btn" type="submit">
+        Preview Booking Request →
+      </button>
+
+      <div id="result" aria-live="polite"></div>
+
+    </form>
+
+    <aside>
+
+      <div class="card summary">
+
+        <h3>Booking summary</h3>
+
+        <p id="visit">Centre visit</p>
+
+        <div id="selected" class="muted">
+          No tests selected yet.
+        </div>
+
+        <hr style="border:0;border-top:1px solid #deebef;margin:20px 0">
+
+        <p class="mini muted">
+          Prices will appear once the verified Heliora
+          test catalogue is provided.
+        </p>
+
+        <p>
+          <strong>Booking status:</strong>
+          <span class="status">Demo preview</span>
+        </p>
+
+        <p class="mini muted">
+          Available appointment times are retrieved from the
+          Heliora Care staging database.
+          Appointment submissions are not enabled yet.
+        </p>
+
+      </div>
+
+    </aside>
+
+  </div>
+
+</main>
+
+<footer class="foot">
+  Heliora Diagnostic · Accurate Care. Better Health. Brighter Tomorrow.
+</footer>
+
+<script src="assets/care-booking.js"></script>
+
+</body>
+</html>
