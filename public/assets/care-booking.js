@@ -1,1 +1,182 @@
-const catalogue=[['Complete Blood Count (CBC)','Pathology',true],['Lipid Profile','Pathology',true],['Thyroid Profile','Pathology',true],['Blood Sugar (Fasting)','Pathology',true],['Liver Function Test','Pathology',true],['Kidney Function Test','Pathology',true],['ECG','Cardiology',false],['X-Ray','Radiology',false],['CT Scan','Radiology',false]];const chosen=new Set(),el=id=>document.getElementById(id);function render(){let q=el('search').value.toLowerCase();el('tests').innerHTML=catalogue.filter(x=>x[0].toLowerCase().includes(q)).map(([name,category,home])=>`<label class="test"><input type="checkbox" data-test="${name}" ${chosen.has(name)?'checked':''}><span><b>${name}</b><small>${category} · ${home?'Home eligible (illustrative)':'Centre only'}</small></span></label>`).join('')||'<p>No matching tests.</p>';el('selected').innerHTML=chosen.size?'<ul>'+[...chosen].map(x=>'<li>'+x+'</li>').join('')+'</ul>':'No tests selected yet.';el('visit').textContent=el('type').value}el('tests').addEventListener('change',e=>{if(e.target.dataset.test){e.target.checked?chosen.add(e.target.dataset.test):chosen.delete(e.target.dataset.test);render()}});el('search').addEventListener('input',render);el('type').addEventListener('change',()=>{el('addressblock').classList.toggle('hidden',el('type').value!=='Home sample collection');render()});el('date').min=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);el('booking').addEventListener('submit',e=>{e.preventDefault();if(!chosen.size){alert('Please select at least one test.');return}if(el('type').value==='Home sample collection'&&[...chosen].some(n=>!catalogue.find(x=>x[0]===n)[2])){alert('Some selected tests are centre-only in this illustrative catalogue.');return}if(el('type').value==='Home sample collection'&&!el('address').value.trim()){alert('Please enter a demo collection address.');return}const ref='DEMO-'+Math.floor(100000+Math.random()*900000);el('result').innerHTML=`<div class="notice success"><b>Preview created: ${ref}</b><br>This is not a real booking. No email was sent and no information was stored on a server.</div>`;el('result').scrollIntoView({behavior:'smooth',block:'nearest'})});render();
+let catalogue = [];
+
+const chosen = new Set();
+const el = id => document.getElementById(id);
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[char]));
+}
+
+async function loadCatalogue() {
+  el("tests").textContent = "Loading diagnostic tests...";
+
+  try {
+    const response = await fetch("/api/tests", {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Unable to retrieve tests");
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data.tests)) {
+      throw new Error("Invalid catalogue response");
+    }
+
+    catalogue = data.tests.map(test => ({
+      id: test.id,
+      name: test.test_name,
+      category: test.category || "Diagnostic Test",
+      price: test.price,
+      home: Number(test.home_collection) === 1
+    }));
+
+    render();
+
+  } catch (error) {
+    console.error("Catalogue loading failed:", error);
+
+    el("tests").textContent =
+      "Unable to load diagnostic tests. Please refresh the page.";
+  }
+}
+
+function render() {
+  const search = el("search").value.toLowerCase();
+
+  const filtered = catalogue.filter(test =>
+    test.name.toLowerCase().includes(search)
+  );
+
+  el("tests").innerHTML = filtered.map(test => {
+
+    const checked = chosen.has(test.id) ? "checked" : "";
+
+    const availability = test.home
+      ? "Home collection eligible"
+      : "Centre visit only";
+
+    return `
+      <label class="test">
+        <input
+          type="checkbox"
+          data-test-id="${test.id}"
+          ${checked}
+        >
+        <span>
+          <b>${escapeHTML(test.name)}</b>
+          <small>
+            ${escapeHTML(test.category)} · ${availability}
+          </small>
+        </span>
+      </label>
+    `;
+
+  }).join("") || "<p>No matching tests.</p>";
+
+  const selectedTests = catalogue.filter(test =>
+    chosen.has(test.id)
+  );
+
+  el("selected").innerHTML = selectedTests.length
+    ? "<ul>" +
+      selectedTests.map(test =>
+        `<li>${escapeHTML(test.name)}</li>`
+      ).join("") +
+      "</ul>"
+    : "No tests selected yet.";
+
+  el("visit").textContent = el("type").value;
+}
+
+el("tests").addEventListener("change", event => {
+
+  const checkbox = event.target;
+
+  if (!checkbox.matches("[data-test-id]")) {
+    return;
+  }
+
+  const id = Number(checkbox.dataset.testId);
+
+  if (checkbox.checked) {
+    chosen.add(id);
+  } else {
+    chosen.delete(id);
+  }
+
+  render();
+});
+
+el("search").addEventListener("input", render);
+
+el("type").addEventListener("change", () => {
+
+  const isHome =
+    el("type").value === "Home sample collection";
+
+  el("addressblock").classList.toggle("hidden", !isHome);
+
+  render();
+});
+
+el("date").min = new Date(
+  Date.now() - new Date().getTimezoneOffset() * 60000
+).toISOString().slice(0, 10);
+
+el("booking").addEventListener("submit", event => {
+
+  event.preventDefault();
+
+  if (!chosen.size) {
+    alert("Please select at least one test.");
+    return;
+  }
+
+  const selectedTests = catalogue.filter(test =>
+    chosen.has(test.id)
+  );
+
+  const isHome =
+    el("type").value === "Home sample collection";
+
+  if (isHome && selectedTests.some(test => !test.home)) {
+    alert(
+      "Some selected tests are available for centre visits only."
+    );
+    return;
+  }
+
+  if (isHome && !el("address").value.trim()) {
+    alert("Please enter a collection address.");
+    return;
+  }
+
+  const reference =
+    "DEMO-" + Math.floor(100000 + Math.random() * 900000);
+
+  el("result").innerHTML = `
+    <div class="notice success">
+      <b>Preview created: ${reference}</b>
+      <br>
+      This is not a confirmed appointment.
+      No email has been sent and no booking has been
+      saved to the database.
+    </div>
+  `;
+
+  el("result").scrollIntoView({
+    behavior: "smooth",
+    block: "nearest"
+  });
+});
+
+loadCatalogue();
