@@ -1,0 +1,19 @@
+{
+  "name": "heliora-care-staging",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "heliora-care-db",
+      "database_id": "d0028f65-0a21-47a0-8237-f4b1fbf9da91"
+    }
+  ],
+  "vars": {
+    "ENABLE_BOOKINGS": "false"
+  }
+}
