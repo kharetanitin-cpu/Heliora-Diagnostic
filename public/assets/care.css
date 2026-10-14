@@ -1,2 +1,300 @@
+/* =====================================================
+   HELIORA CARE — INTERACTIVE APPOINTMENT CALENDAR
+   ===================================================== */
 
-:root{--blue:#1468ad;--teal:#008f98;--green:#29a36a;--ink:#17334a;--muted:#61758a;--line:#deebef;--bg:#f3f9fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}a{color:var(--blue)}.shell{max-width:1170px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);font-size:19px;font-weight:800}.logo img{width:46px;height:46px;object-fit:contain}.top nav{display:flex;gap:20px;align-items:center}.top nav a{text-decoration:none;font-weight:650}.pill,.btn{display:inline-block;border:0;border-radius:11px;padding:12px 18px;font-weight:700;cursor:pointer;text-decoration:none}.btn{background:linear-gradient(110deg,var(--blue),var(--teal));color:white}.btn.secondary{background:#e9f6f5;color:#006a73}.pill{background:#e6f7ee;color:#157448}.hero{background:linear-gradient(125deg,#e7f4ff,#e6fff2);padding:42px;border-radius:22px;margin:24px 0}.hero h1{font-size:clamp(28px,4vw,42px);line-height:1.12;margin:8px 0}.hero p{color:var(--muted);max-width:700px}.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:24px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:25px;box-shadow:0 10px 32px #1c6e9b0a;margin-bottom:20px}.card h2,.card h3{margin:0 0 15px}.muted{color:var(--muted)}label{display:block;font-weight:650;margin:14px 0 6px}input,select,textarea{width:100%;border:1px solid #cbdce4;border-radius:10px;padding:12px;font:inherit;background:#fff}input:focus,select:focus,textarea:focus{outline:2px solid #79c7d0}input[type=checkbox]{width:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tests{display:grid;grid-template-columns:1fr 1fr;gap:10px}.test{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer}.test:hover{background:#f2faf9}.test small{display:block;color:var(--muted)}.notice{padding:14px;border-radius:12px;background:#fff5de;color:#745316;margin:15px 0}.success{background:#e4f8ed;color:#14683e}.hidden{display:none!important}.summary{position:sticky;top:15px}.summary ul{padding-left:20px}.mini{font-size:13px}.dash{display:grid;grid-template-columns:235px 1fr;min-height:100vh}.sidebar{background:#fff;border-right:1px solid var(--line);padding:24px 18px}.sidebar .logo{margin-bottom:34px}.sidebar a{display:block;text-decoration:none;color:var(--ink);padding:12px;border-radius:10px;font-weight:650}.sidebar a.active{background:#e8f5fb;color:var(--blue)}.main{padding:30px;min-width:0}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.stat strong{font-size:32px;display:block;color:var(--blue)}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:13px}th{background:#f5fafb;color:var(--muted);font-size:13px}.status{border-radius:20px;background:#fff3dc;color:#855d00;padding:5px 10px;font-size:12px;font-weight:800}.status.confirmed{background:#e2f7ec;color:#177144}.status.cancelled{background:#ffe6e6;color:#a02e2e}.status.completed{background:#e4f0ff;color:#225da1}.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.toolbar input{max-width:280px}.modal{position:fixed;inset:0;background:#122b3f8c;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modal .card{width:min(620px,100%);max-height:90vh;overflow:auto}.demo{font-weight:800;letter-spacing:.05em;color:#a56500;font-size:12px}.foot{text-align:center;color:var(--muted);padding:20px}@media(max-width:800px){.grid,.dash{grid-template-columns:1fr}.sidebar{border:0;padding:14px}.sidebar a{display:inline-block}.main{padding:16px}.statgrid{grid-template-columns:1fr 1fr}.hero{padding:26px}.top{flex-wrap:wrap}.tests{grid-template-columns:1fr}}@media(max-width:480px){.row,.statgrid{grid-template-columns:1fr}.top nav{flex-wrap:wrap}}
+.appointment-picker {
+  margin-top: 30px;
+  margin-bottom: 30px;
+  padding-top: 24px;
+  border-top: 1px solid #deebef;
+}
+
+.appointment-picker > h3 {
+  margin-bottom: 8px;
+  color: #173f54;
+}
+
+.calendar-booking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  margin-top: 22px;
+  align-items: start;
+}
+
+/* CALENDAR */
+
+.booking-calendar {
+  background: #ffffff;
+  border: 1px solid #deebef;
+  border-radius: 16px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.calendar-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #173f54;
+  margin: 0;
+  text-align: center;
+}
+
+.calendar-nav {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #deebef;
+  background: #f4fafb;
+  color: #173f54;
+  cursor: pointer;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.calendar-nav:hover:not(:disabled) {
+  background: #e4f5f2;
+  border-color: #159a88;
+}
+
+.calendar-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* WEEKDAY HEADINGS */
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.calendar-weekdays span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #758b96;
+}
+
+/* CALENDAR DAYS */
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.calendar-day {
+  position: relative;
+  min-width: 0;
+  min-height: 42px;
+  padding: 5px 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #f4fafb;
+  color: #173f54;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.calendar-day:hover:not(:disabled) {
+  background: #e4f5f2;
+  border-color: #159a88;
+}
+
+.calendar-day.today {
+  border: 1px solid #159a88;
+}
+
+.calendar-day.selected {
+  background: #159a88;
+  color: white;
+  border-color: #159a88;
+}
+
+.calendar-day.past {
+  background: #f5f7f8;
+  color: #b6c0c5;
+  cursor: not-allowed;
+}
+
+.calendar-empty {
+  min-height: 42px;
+}
+
+/* AVAILABILITY LEGEND */
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #deebef;
+}
+
+.calendar-legend span {
+  font-size: 10px;
+  color: #667f89;
+}
+
+.calendar-legend span:nth-child(1) {
+  color: #159a88;
+}
+
+.calendar-legend span:nth-child(2) {
+  color: #d49a22;
+}
+
+.calendar-legend span:nth-child(3) {
+  color: #bd6262;
+}
+
+/* TIME SLOT PANEL */
+
+.booking-time-panel {
+  background: #ffffff;
+  border: 1px solid #deebef;
+  border-radius: 16px;
+  padding: 18px;
+  min-width: 0;
+}
+
+.booking-time-panel h3 {
+  font-size: 17px;
+  color: #173f54;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+#selected-date-label {
+  font-size: 12px;
+  margin-bottom: 18px;
+}
+
+/* TIME SLOT BUTTONS */
+
+.time-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.time-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 65px;
+  padding: 10px 5px;
+  background: #f4fafb;
+  border: 1px solid #deebef;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #173f54;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.time-slot strong {
+  font-size: 13px;
+}
+
+.time-slot small {
+  font-size: 10px;
+  color: #159a88;
+}
+
+.time-slot:hover:not(:disabled) {
+  background: #e4f5f2;
+  border-color: #159a88;
+}
+
+.time-slot.selected {
+  background: #159a88;
+  color: #ffffff;
+  border-color: #159a88;
+}
+
+.time-slot.selected small {
+  color: #ffffff;
+}
+
+.time-slot.full {
+  background: #f5f7f8;
+  color: #a8b4bb;
+  cursor: not-allowed;
+}
+
+.time-slot.full small {
+  color: #bd6262;
+}
+
+/* SLOT MESSAGE */
+
+#slot-message {
+  margin-top: 15px;
+  line-height: 1.5;
+}
+
+/* KEYBOARD ACCESSIBILITY */
+
+.calendar-day:focus-visible,
+.calendar-nav:focus-visible,
+.time-slot:focus-visible {
+  outline: 3px solid #173f54;
+  outline-offset: 2px;
+}
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 900px) {
+
+  .calendar-booking-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-calendar,
+  .booking-time-panel {
+    padding: 15px;
+  }
+
+}
+
+@media (max-width: 420px) {
+
+  .calendar-day {
+    min-height: 40px;
+    font-size: 12px;
+  }
+
+  .calendar-days,
+  .calendar-weekdays {
+    gap: 3px;
+  }
+
+  .calendar-legend {
+    gap: 8px;
+  }
+
+  .time-slot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .time-slot {
+    min-height: 60px;
+  }
+
+}
