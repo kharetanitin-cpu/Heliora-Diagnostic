@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +13,7 @@
 <body>
 
 <header class="top">
+
   <a class="logo" href="index.html">
     <img src="assets/heliora-emblem.jpg" alt="Heliora logo">
     HELIORA <span style="color:#159a88">CARE</span>
@@ -20,13 +22,18 @@
   <nav>
     <a href="index.html">Home</a>
   </nav>
+
 </header>
 
 <main class="shell">
 
+  <!-- PAGE INTRODUCTION -->
+
   <section class="hero">
 
-    <span class="pill">Diagnostic appointments made easier</span>
+    <span class="pill">
+      Diagnostic appointments made easier
+    </span>
 
     <h1>Book your tests with confidence.</h1>
 
@@ -46,6 +53,8 @@
 
   <div class="grid">
 
+    <!-- BOOKING FORM -->
+
     <form id="booking" class="card">
 
       <h2>Book an appointment</h2>
@@ -55,19 +64,27 @@
         Live appointment booking will be enabled after testing.
       </p>
 
+      <!-- APPOINTMENT TYPE -->
+
       <label for="type">Appointment type</label>
 
       <select id="type">
-        <option value="Centre visit">Visit Heliora Diagnostic</option>
+        <option value="Centre visit">
+          Visit Heliora Diagnostic
+        </option>
+
         <option value="Home sample collection" disabled>
           Home Sample Collection — Coming Soon
         </option>
       </select>
 
+      <!-- DIAGNOSTIC TESTS -->
+
       <label for="search">Find tests</label>
 
       <input
         id="search"
+        type="search"
         placeholder="Search CBC, thyroid, ECG..."
       >
 
@@ -77,62 +94,172 @@
         style="margin-top:12px"
       ></div>
 
+      <!-- INTERACTIVE APPOINTMENT CALENDAR -->
+
+      <section class="appointment-picker">
+
+        <h3>Choose your appointment</h3>
+
+        <p class="muted">
+          Select a date to see available appointment times.
+        </p>
+
+        <div class="calendar-booking-layout">
+
+          <!-- CALENDAR -->
+
+          <div class="booking-calendar">
+
+            <div class="calendar-header">
+
+              <button
+                type="button"
+                id="prev-month"
+                class="calendar-nav"
+                aria-label="Previous month"
+              >
+                &#10094;
+              </button>
+
+              <h3 id="calendar-month">
+                Select a month
+              </h3>
+
+              <button
+                type="button"
+                id="next-month"
+                class="calendar-nav"
+                aria-label="Next month"
+              >
+                &#10095;
+              </button>
+
+            </div>
+
+            <div class="calendar-weekdays">
+
+              <span>Sun</span>
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+
+            </div>
+
+            <div
+              id="calendar-days"
+              class="calendar-days"
+              aria-label="Select appointment date"
+            ></div>
+
+            <div class="calendar-legend">
+
+              <span>
+                ● Available
+              </span>
+
+              <span>
+                ● Limited
+              </span>
+
+              <span>
+                ● Fully booked
+              </span>
+
+            </div>
+
+          </div>
+
+          <!-- AVAILABLE TIME SLOTS -->
+
+          <div class="booking-time-panel">
+
+            <h3>Available appointment times</h3>
+
+            <p
+              id="selected-date-label"
+              class="muted"
+            >
+              Please select a date.
+            </p>
+
+            <div
+              id="time-slots"
+              class="time-slot-grid"
+              role="group"
+              aria-label="Appointment times"
+            ></div>
+
+            <p
+              id="slot-message"
+              class="mini muted"
+              aria-live="polite"
+            >
+              Choose a date to check availability.
+            </p>
+
+          </div>
+
+        </div>
+
+        <!-- HIDDEN FIELDS USED BY JAVASCRIPT -->
+
+        <input
+          id="date"
+          type="hidden"
+        >
+
+        <input
+          id="time"
+          type="hidden"
+        >
+
+      </section>
+
+      <!-- PATIENT DETAILS -->
+
+      <h3>Patient details</h3>
+
       <div class="row">
 
         <div>
-          <label for="date">Appointment date</label>
 
-          <input
-            id="date"
-            type="date"
-            required
-          >
-        </div>
-
-        <div>
-          <label for="time">Available appointment time</label>
-
-          <select id="time" required disabled>
-            <option value="">Select a date first</option>
-          </select>
-
-          <p
-            id="slot-message"
-            class="mini muted"
-            aria-live="polite"
-          >
-            Choose a date to check availability.
-          </p>
-        </div>
-
-      </div>
-
-      <div class="row">
-
-        <div>
-          <label for="name">Patient name</label>
+          <label for="name">
+            Patient name
+          </label>
 
           <input
             id="name"
             required
+            autocomplete="name"
             placeholder="Demo Patient"
           >
+
         </div>
 
         <div>
-          <label for="phone">Mobile number</label>
+
+          <label for="phone">
+            Mobile number
+          </label>
 
           <input
             id="phone"
+            type="tel"
             inputmode="tel"
             required
             placeholder="10-digit mobile"
           >
+
         </div>
 
       </div>
 
-      <label for="email">Email address</label>
+      <label for="email">
+        Email address
+      </label>
 
       <input
         id="email"
@@ -141,7 +268,9 @@
         placeholder="demo@example.com"
       >
 
-      <label for="notes">Notes (optional)</label>
+      <label for="notes">
+        Notes (optional)
+      </label>
 
       <textarea
         id="notes"
@@ -154,13 +283,23 @@
         history during testing.
       </p>
 
-      <button class="btn" type="submit">
+      <!-- SUBMIT BUTTON -->
+
+      <button
+        class="btn"
+        type="submit"
+      >
         Preview Booking Request →
       </button>
 
-      <div id="result" aria-live="polite"></div>
+      <div
+        id="result"
+        aria-live="polite"
+      ></div>
 
     </form>
+
+    <!-- BOOKING SUMMARY -->
 
     <aside>
 
@@ -168,13 +307,20 @@
 
         <h3>Booking summary</h3>
 
-        <p id="visit">Centre visit</p>
+        <p id="visit">
+          Centre visit
+        </p>
 
-        <div id="selected" class="muted">
+        <div
+          id="selected"
+          class="muted"
+        >
           No tests selected yet.
         </div>
 
-        <hr style="border:0;border-top:1px solid #deebef;margin:20px 0">
+        <hr
+          style="border:0;border-top:1px solid #deebef;margin:20px 0"
+        >
 
         <p class="mini muted">
           Prices will appear once the verified Heliora
@@ -183,7 +329,9 @@
 
         <p>
           <strong>Booking status:</strong>
-          <span class="status">Demo preview</span>
+          <span class="status">
+            Demo preview
+          </span>
         </p>
 
         <p class="mini muted">
