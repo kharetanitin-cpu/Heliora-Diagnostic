@@ -1,26 +1,26 @@
-// HELIORA CARE — BOOKING PAGE
-// Staging version: displays live tests and slots.
-// Actual booking submissions remain disabled.
+// ======================================================
+// HELIORA CARE - INTERACTIVE APPOINTMENT BOOKING
+// Staging Version
+// ======================================================
 
 const el = id => document.getElementById(id);
 
-let catalogue = [];
 const chosen = new Set();
 
+let catalogue = [];
 let availableSlots = [];
-let slotsRequestId = 0;
+let selectedDate = "";
+let selectedTime = "";
 
-// Convert 24-hour time to 12-hour display.
-function displayTime(time) {
-  const [hour, minute] = time.split(":").map(Number);
+let displayedMonth;
+let displayedYear;
 
-  const period = hour >= 12 ? "PM" : "AM";
-  const hour12 = hour % 12 || 12;
+let slotRequestId = 0;
 
-  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
-}
+// ======================================================
+// DATE HELPERS
+// ======================================================
 
-// Get today's date in India.
 function indiaToday() {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
@@ -36,7 +36,46 @@ function indiaToday() {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-// Safely display text in HTML.
+function parseDate(dateString) {
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  return { year, month, day };
+}
+
+function dateKey(year, month, day) {
+  return [
+    year,
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0")
+  ].join("-");
+}
+
+function displayTime(time) {
+  const [hour, minute] = time.split(":").map(Number);
+
+  const period = hour >= 12 ? "PM" : "AM";
+  const hour12 = hour % 12 || 12;
+
+  return `${hour12}:${String(minute).padStart(2, "0")} ${period}`;
+}
+
+function readableDate(dateString) {
+  const { year, month, day } = parseDate(dateString);
+
+  return new Date(Date.UTC(year, month - 1, day))
+    .toLocaleDateString("en-IN", {
+      timeZone: "UTC",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    });
+}
+
+// ======================================================
+// SAFE HTML
+// ======================================================
+
 function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -47,7 +86,10 @@ function escapeHTML(value) {
   }[char]));
 }
 
-// Load diagnostic tests from Cloudflare D1.
+// ======================================================
+// LOAD DIAGNOSTIC TESTS
+// ======================================================
+
 async function loadTests() {
   el("tests").textContent = "Loading diagnostic tests...";
 
@@ -57,7 +99,7 @@ async function loadTests() {
     });
 
     if (!response.ok) {
-      throw new Error("Unable to retrieve tests");
+      throw new Error("Unable to load tests");
     }
 
     const data = await response.json();
@@ -67,15 +109,19 @@ async function loadTests() {
     }
 
     catalogue = data.tests;
+
     renderTests();
 
   } catch (error) {
     el("tests").textContent =
-      "Unable to load diagnostic tests. Please try again later.";
+      "Unable to load diagnostic tests. Please refresh the page.";
   }
 }
 
-// Display tests with checkboxes.
+// ======================================================
+// DISPLAY DIAGNOSTIC TESTS
+// ======================================================
+
 function renderTests() {
   const search = el("search").value.trim().toLowerCase();
 
@@ -86,10 +132,11 @@ function renderTests() {
   el("tests").innerHTML = filtered.length
     ? filtered.map(test => `
         <label class="test">
+
           <input
             type="checkbox"
-            data-test-id="${test.id}"
-            ${chosen.has(test.id) ? "checked" : ""}
+            data-test-id="${Number(test.id)}"
+            ${chosen.has(Number(test.id)) ? "checked" : ""}
           >
 
           <span>
@@ -100,6 +147,7 @@ function renderTests() {
               · Centre visit
             </small>
           </span>
+
         </label>
       `).join("")
     : "<p>No matching tests found.</p>";
@@ -107,12 +155,11 @@ function renderTests() {
   renderSummary();
 }
 
-// Update booking summary.
 function renderSummary() {
   el("visit").textContent = "Centre visit";
 
   const selected = catalogue.filter(test =>
-    chosen.has(test.id)
+    chosen.has(Number(test.id))
   );
 
   if (!selected.length) {
@@ -131,50 +178,160 @@ function renderSummary() {
   el("selected").replaceChildren(list);
 }
 
-// Retrieve live appointment availability.
-async function loadSlots() {
-  const date = el("date").value;
-  const timeSelect = el("time");
+// ======================================================
+// CALENDAR
+// ======================================================
+
+function initializeCalendar() {
+  const today = parseDate(indiaToday());
+
+  displayedMonth = today.month;
+  displayedYear = today.year;
+
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const container = el("calendar-days");
+
+  container.replaceChildren();
+
+  const monthName = new Date(
+    Date.UTC(displayedYear, displayedMonth - 1, 1)
+  ).toLocaleDateString("en-IN", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric"
+  });
+
+  el("calendar-month").textContent = monthName;
+
+  const firstDay = new Date(
+    Date.UTC(displayedYear, displayedMonth - 1, 1)
+  ).getUTCDay();
+
+  const daysInMonth = new Date(
+    Date.UTC(displayedYear, displayedMonth, 0)
+  ).getUTCDate();
+
+  const today = indiaToday();
+
+  // Empty spaces before first day
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement("span");
+    blank.className = "calendar-empty";
+    container.appendChild(blank);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = dateKey(
+      displayedYear,
+      displayedMonth,
+      day
+    );
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "calendar-day";
+
+    button.textContent = day;
+    button.dataset.date = date;
+
+    if (date < today) {
+      button.disabled = true;
+      button.classList.add("past");
+    }
+
+    if (date === today) {
+      button.classList.add("today");
+    }
+
+    if (date === selectedDate) {
+      button.classList.add("selected");
+    }
+
+    button.addEventListener("click", () => {
+      selectDate(date);
+    });
+
+    container.appendChild(button);
+  }
+
+  const todayParts = parseDate(today);
+
+  const isCurrentMonth =
+    displayedYear === todayParts.year &&
+    displayedMonth === todayParts.month;
+
+  const isPastMonth =
+    displayedYear < todayParts.year ||
+    (
+      displayedYear === todayParts.year &&
+      displayedMonth < todayParts.month
+    );
+
+  el("prev-month").disabled =
+    isCurrentMonth || isPastMonth;
+}
+
+// ======================================================
+// SELECT APPOINTMENT DATE
+// ======================================================
+
+async function selectDate(date) {
+  selectedDate = date;
+  selectedTime = "";
+
+  el("date").value = date;
+  el("time").value = "";
+
+  el("selected-date-label").textContent =
+    readableDate(date);
+
+  el("result").replaceChildren();
+
+  renderCalendar();
+
+  await loadSlots(date);
+}
+
+// ======================================================
+// LOAD LIVE APPOINTMENT SLOTS
+// ======================================================
+
+async function loadSlots(date) {
+  const requestId = ++slotRequestId;
+
+  const container = el("time-slots");
   const message = el("slot-message");
 
-  // Prevent an older request from replacing newer results.
-  const requestId = ++slotsRequestId;
+  container.replaceChildren();
 
   availableSlots = [];
 
-  timeSelect.disabled = true;
-  timeSelect.replaceChildren(new Option("Choose a time", ""));
-
-  if (!date) {
-    message.textContent = "Choose a date to check availability.";
-    return;
-  }
-
-  if (date < indiaToday()) {
-    message.textContent = "Please choose today or a future date.";
-    return;
-  }
-
-  message.textContent = "Checking appointment availability...";
+  message.textContent = "Checking available appointments...";
 
   try {
     const response = await fetch(
       `/api/slots?date=${encodeURIComponent(date)}`,
-      { cache: "no-store" }
+      {
+        cache: "no-store"
+      }
     );
 
     if (!response.ok) {
-      throw new Error("Unable to retrieve slots");
+      throw new Error("Unable to load slots");
     }
 
     const data = await response.json();
 
-    if (requestId !== slotsRequestId) {
+    if (requestId !== slotRequestId) {
       return;
     }
 
     if (!Array.isArray(data.slots)) {
-      throw new Error("Invalid availability response");
+      throw new Error("Invalid slots response");
     }
 
     availableSlots = data.slots;
@@ -182,44 +339,110 @@ async function loadSlots() {
     let availableCount = 0;
 
     for (const slot of availableSlots) {
-      const option = document.createElement("option");
+      const button = document.createElement("button");
 
-      option.value = slot.time;
+      button.type = "button";
+      button.className = "time-slot";
+
+      button.dataset.time = slot.time;
+
+      const timeLabel = document.createElement("strong");
+      timeLabel.textContent = displayTime(slot.time);
+
+      const capacityLabel = document.createElement("small");
 
       if (slot.available) {
-        option.textContent =
-          `${displayTime(slot.time)} — ${slot.remaining} available`;
+        capacityLabel.textContent =
+          `${slot.remaining} places left`;
 
         availableCount++;
       } else {
-        option.textContent =
-          `${displayTime(slot.time)} — Unavailable`;
-
-        option.disabled = true;
+        capacityLabel.textContent = "Fully booked";
+        button.disabled = true;
+        button.classList.add("full");
       }
 
-      timeSelect.appendChild(option);
-    }
+      button.append(timeLabel, capacityLabel);
 
-    timeSelect.disabled = availableCount === 0;
+      button.addEventListener("click", () => {
+        selectTime(slot.time);
+      });
+
+      container.appendChild(button);
+    }
 
     message.textContent = availableCount
-      ? `${availableCount} appointment times available. Maximum 5 bookings per slot.`
-      : "No appointment times are available for this date.";
+      ? `${availableCount} appointment times available.`
+      : "No appointment times available for this date.";
 
   } catch (error) {
-    if (requestId !== slotsRequestId) {
+    if (requestId !== slotRequestId) {
       return;
     }
-
-    timeSelect.disabled = true;
 
     message.textContent =
       "Unable to check availability. Please try again.";
   }
 }
 
-// Select or deselect diagnostic tests.
+// ======================================================
+// SELECT APPOINTMENT TIME
+// ======================================================
+
+function selectTime(time) {
+  const slot = availableSlots.find(item =>
+    item.time === time && item.available
+  );
+
+  if (!slot) {
+    return;
+  }
+
+  selectedTime = time;
+
+  el("time").value = time;
+
+  document.querySelectorAll(".time-slot")
+    .forEach(button => {
+      button.classList.toggle(
+        "selected",
+        button.dataset.time === time
+      );
+    });
+
+  el("result").replaceChildren();
+}
+
+// ======================================================
+// MONTH NAVIGATION
+// ======================================================
+
+el("prev-month").addEventListener("click", () => {
+  displayedMonth--;
+
+  if (displayedMonth < 1) {
+    displayedMonth = 12;
+    displayedYear--;
+  }
+
+  renderCalendar();
+});
+
+el("next-month").addEventListener("click", () => {
+  displayedMonth++;
+
+  if (displayedMonth > 12) {
+    displayedMonth = 1;
+    displayedYear++;
+  }
+
+  renderCalendar();
+});
+
+// ======================================================
+// TEST SELECTION
+// ======================================================
+
 el("tests").addEventListener("change", event => {
   const checkbox = event.target;
 
@@ -238,54 +461,52 @@ el("tests").addEventListener("change", event => {
   renderTests();
 });
 
-// Search diagnostic tests.
 el("search").addEventListener("input", renderTests);
 
-// Reload slots when the patient changes the date.
-el("date").addEventListener("change", loadSlots);
+// ======================================================
+// DEMO BOOKING PREVIEW
+// ======================================================
 
-// Keep the appointment type set to centre visit.
-el("type").value = "Centre visit";
-
-// Set the earliest selectable date.
-el("date").min = indiaToday();
-
-// Handle demo booking preview.
 el("booking").addEventListener("submit", async event => {
   event.preventDefault();
-
-  const result = el("result");
-  result.replaceChildren();
 
   if (!chosen.size) {
     alert("Please select at least one diagnostic test.");
     return;
   }
 
-  const date = el("date").value;
-  const time = el("time").value;
-
-  if (!date || !time) {
+  if (!selectedDate || !selectedTime) {
     alert("Please select an appointment date and time.");
     return;
   }
 
-  // Refresh availability before showing the preview.
-  await loadSlots();
+  const date = selectedDate;
+  const time = selectedTime;
+
+  // Recheck availability before displaying preview
+  await loadSlots(date);
 
   const slot = availableSlots.find(item =>
     item.time === time && item.available
   );
 
   if (!slot) {
+    selectedTime = "";
+    el("time").value = "";
+
     alert(
-      "This appointment time is no longer available. Please select another time."
+      "This appointment time is no longer available. Please select another."
     );
+
     return;
   }
 
-  // Restore the selected time after refreshing.
-  el("time").value = time;
+  // Restore selected time
+  selectTime(time);
+
+  const result = el("result");
+
+  result.replaceChildren();
 
   const notice = document.createElement("div");
   notice.className = "notice success";
@@ -295,11 +516,11 @@ el("booking").addEventListener("submit", async event => {
 
   const details = document.createElement("p");
   details.textContent =
-    `${date} at ${displayTime(time)} — Centre visit`;
+    `${readableDate(date)} at ${displayTime(time)}`;
 
   const warning = document.createElement("p");
   warning.textContent =
-    "This is a demonstration only. No appointment has been created, no information has been saved, and no confirmation email has been sent.";
+    "This is a demonstration only. No appointment has been saved and no confirmation email has been sent.";
 
   notice.append(heading, details, warning);
 
@@ -311,5 +532,11 @@ el("booking").addEventListener("submit", async event => {
   });
 });
 
-// Initialize booking page.
+// ======================================================
+// INITIALIZE
+// ======================================================
+
+el("type").value = "Centre visit";
+
+initializeCalendar();
 loadTests();
