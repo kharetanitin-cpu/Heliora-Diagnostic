@@ -1,15 +1,21 @@
+/* ==========================================================
+   HELIORA CARE — APPOINTMENT BOOKING
+   Interactive Calendar | Staging Version
+   ========================================================== */
 
-:root{--blue:#1468ad;--teal:#008f98;--green:#29a36a;--ink:#17334a;--muted:#61758a;--line:#deebef;--bg:#f3f9fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}a{color:var(--blue)}.shell{max-width:1170px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink);font-size:19px;font-weight:800}.logo img{width:46px;height:46px;object-fit:contain}.top nav{display:flex;gap:20px;align-items:center}.top nav a{text-decoration:none;font-weight:650}.pill,.btn{display:inline-block;border:0;border-radius:11px;padding:12px 18px;font-weight:700;cursor:pointer;text-decoration:none}.btn{background:linear-gradient(110deg,var(--blue),var(--teal));color:white}.btn.secondary{background:#e9f6f5;color:#006a73}.pill{background:#e6f7ee;color:#157448}.hero{background:linear-gradient(125deg,#e7f4ff,#e6fff2);padding:42px;border-radius:22px;margin:24px 0}.hero h1{font-size:clamp(28px,4vw,42px);line-height:1.12;margin:8px 0}.hero p{color:var(--muted);max-width:700px}.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:24px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:25px;box-shadow:0 10px 32px #1c6e9b0a;margin-bottom:20px}.card h2,.card h3{margin:0 0 15px}.muted{color:var(--muted)}label{display:block;font-weight:650;margin:14px 0 6px}input,select,textarea{width:100%;border:1px solid #cbdce4;border-radius:10px;padding:12px;font:inherit;background:#fff}input:focus,select:focus,textarea:focus{outline:2px solid #79c7d0}input[type=checkbox]{width:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}.tests{display:grid;grid-template-columns:1fr 1fr;gap:10px}.test{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer}.test:hover{background:#f2faf9}.test small{display:block;color:var(--muted)}.notice{padding:14px;border-radius:12px;background:#fff5de;color:#745316;margin:15px 0}.success{background:#e4f8ed;color:#14683e}.hidden{display:none!important}.summary{position:sticky;top:15px}.summary ul{padding-left:20px}.mini{font-size:13px}.dash{display:grid;grid-template-columns:235px 1fr;min-height:100vh}.sidebar{background:#fff;border-right:1px solid var(--line);padding:24px 18px}.sidebar .logo{margin-bottom:34px}.sidebar a{display:block;text-decoration:none;color:var(--ink);padding:12px;border-radius:10px;font-weight:650}.sidebar a.active{background:#e8f5fb;color:var(--blue)}.main{padding:30px;min-width:0}.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}.stat strong{font-size:32px;display:block;color:var(--blue)}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:13px}th{background:#f5fafb;color:var(--muted);font-size:13px}.status{border-radius:20px;background:#fff3dc;color:#855d00;padding:5px 10px;font-size:12px;font-weight:800}.status.confirmed{background:#e2f7ec;color:#177144}.status.cancelled{background:#ffe6e6;color:#a02e2e}.status.completed{background:#e4f0ff;color:#225da1}.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.toolbar input{max-width:280px}.modal{position:fixed;inset:0;background:#122b3f8c;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}.modal .card{width:min(620px,100%);max-height:90vh;overflow:auto}.demo{font-weight:800;letter-spacing:.05em;color:#a56500;font-size:12px}.foot{text-align:center;color:var(--muted);padding:20px}@media(max-width:800px){.grid,.dash{grid-template-columns:1fr}.sidebar{border:0;padding:14px}.sidebar a{display:inline-block}.main{padding:16px}.statgrid{grid-template-columns:1fr 1fr}.hero{padding:26px}.top{flex-wrap:wrap}.tests{grid-template-columns:1fr}}@media(max-width:480px){.row,.statgrid{grid-template-columns:1fr}.top nav{flex-wrap:wrap}}// ======================================================
-// HELIORA CARE - INTERACTIVE APPOINTMENT BOOKING
-// Staging Version
-// ======================================================
+"use strict";
 
-const el = id => document.getElementById(id);
+// ----------------------------------------------------------
+// ELEMENTS AND STATE
+// ----------------------------------------------------------
+
+const el = (id) => document.getElementById(id);
 
 const chosen = new Set();
 
 let catalogue = [];
 let availableSlots = [];
+
 let selectedDate = "";
 let selectedTime = "";
 
@@ -18,9 +24,9 @@ let displayedYear;
 
 let slotRequestId = 0;
 
-// ======================================================
-// DATE HELPERS
-// ======================================================
+// ----------------------------------------------------------
+// DATE AND TIME HELPERS
+// ----------------------------------------------------------
 
 function indiaToday() {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -30,9 +36,11 @@ function indiaToday() {
     day: "2-digit"
   }).formatToParts(new Date());
 
-  const values = Object.fromEntries(
-    parts.map(part => [part.type, part.value])
-  );
+  const values = {};
+
+  for (const part of parts) {
+    values[part.type] = part.value;
+  }
 
   return `${values.year}-${values.month}-${values.day}`;
 }
@@ -63,36 +71,25 @@ function displayTime(time) {
 function readableDate(dateString) {
   const { year, month, day } = parseDate(dateString);
 
-  return new Date(Date.UTC(year, month - 1, day))
-    .toLocaleDateString("en-IN", {
-      timeZone: "UTC",
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric"
-    });
+  return new Date(
+    Date.UTC(year, month - 1, day)
+  ).toLocaleDateString("en-IN", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
 }
 
-// ======================================================
-// SAFE HTML
-// ======================================================
-
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  }[char]));
-}
-
-// ======================================================
+// ----------------------------------------------------------
 // LOAD DIAGNOSTIC TESTS
-// ======================================================
+// ----------------------------------------------------------
 
 async function loadTests() {
-  el("tests").textContent = "Loading diagnostic tests...";
+  const container = el("tests");
+
+  container.textContent = "Loading diagnostic tests...";
 
   try {
     const response = await fetch("/api/tests", {
@@ -100,13 +97,13 @@ async function loadTests() {
     });
 
     if (!response.ok) {
-      throw new Error("Unable to load tests");
+      throw new Error("Unable to load diagnostic tests");
     }
 
     const data = await response.json();
 
     if (!Array.isArray(data.tests)) {
-      throw new Error("Invalid test catalogue");
+      throw new Error("Invalid diagnostic test response");
     }
 
     catalogue = data.tests;
@@ -114,74 +111,108 @@ async function loadTests() {
     renderTests();
 
   } catch (error) {
-    el("tests").textContent =
+    console.error("Heliora tests error:", error);
+
+    container.textContent =
       "Unable to load diagnostic tests. Please refresh the page.";
   }
 }
 
-// ======================================================
-// DISPLAY DIAGNOSTIC TESTS
-// ======================================================
+// ----------------------------------------------------------
+// RENDER DIAGNOSTIC TESTS
+// ----------------------------------------------------------
 
 function renderTests() {
+  const container = el("tests");
+
   const search = el("search").value.trim().toLowerCase();
 
-  const filtered = catalogue.filter(test =>
-    test.test_name.toLowerCase().includes(search)
+  const filtered = catalogue.filter((test) =>
+    String(test.test_name || "")
+      .toLowerCase()
+      .includes(search)
   );
 
-  el("tests").innerHTML = filtered.length
-    ? filtered.map(test => `
-        <label class="test">
+  container.replaceChildren();
 
-          <input
-            type="checkbox"
-            data-test-id="${Number(test.id)}"
-            ${chosen.has(Number(test.id)) ? "checked" : ""}
-          >
+  if (!filtered.length) {
+    const message = document.createElement("p");
 
-          <span>
-            <b>${escapeHTML(test.test_name)}</b>
+    message.textContent = "No matching tests found.";
 
-            <small>
-              ${escapeHTML(test.category || "Diagnostic test")}
-              · Centre visit
-            </small>
-          </span>
+    container.appendChild(message);
 
-        </label>
-      `).join("")
-    : "<p>No matching tests found.</p>";
+    renderSummary();
+
+    return;
+  }
+
+  for (const test of filtered) {
+    const id = Number(test.id);
+
+    const label = document.createElement("label");
+    label.className = "test";
+
+    const checkbox = document.createElement("input");
+
+    checkbox.type = "checkbox";
+    checkbox.dataset.testId = String(id);
+    checkbox.checked = chosen.has(id);
+
+    const text = document.createElement("span");
+
+    const name = document.createElement("b");
+    name.textContent = test.test_name;
+
+    const category = document.createElement("small");
+    category.textContent =
+      `${test.category || "Diagnostic test"} · Centre visit`;
+
+    text.append(name, category);
+    label.append(checkbox, text);
+
+    container.appendChild(label);
+  }
 
   renderSummary();
 }
 
+// ----------------------------------------------------------
+// BOOKING SUMMARY
+// ----------------------------------------------------------
+
 function renderSummary() {
   el("visit").textContent = "Centre visit";
 
-  const selected = catalogue.filter(test =>
+  const selectedTests = catalogue.filter((test) =>
     chosen.has(Number(test.id))
   );
 
-  if (!selected.length) {
-    el("selected").textContent = "No tests selected yet.";
+  const container = el("selected");
+
+  container.replaceChildren();
+
+  if (!selectedTests.length) {
+    container.textContent = "No tests selected yet.";
     return;
   }
 
   const list = document.createElement("ul");
 
-  for (const test of selected) {
+  for (const test of selectedTests) {
     const item = document.createElement("li");
+
     item.textContent = test.test_name;
+
     list.appendChild(item);
   }
 
-  el("selected").replaceChildren(list);
+  container.appendChild(list);
 }
 
-// ======================================================
-// CALENDAR
-// ======================================================
+// ----------------------------------------------------------
+// INITIALIZE CALENDAR
+// ----------------------------------------------------------
 
 function initializeCalendar() {
   const today = parseDate(indiaToday());
@@ -191,6 +222,10 @@ function initializeCalendar() {
 
   renderCalendar();
 }
+
+// ----------------------------------------------------------
+// RENDER CALENDAR
+// ----------------------------------------------------------
 
 function renderCalendar() {
   const container = el("calendar-days");
@@ -217,11 +252,12 @@ function renderCalendar() {
 
   const today = indiaToday();
 
-  // Empty spaces before first day
   for (let i = 0; i < firstDay; i++) {
-    const blank = document.createElement("span");
-    blank.className = "calendar-empty";
-    container.appendChild(blank);
+    const empty = document.createElement("span");
+
+    empty.className = "calendar-empty";
+
+    container.appendChild(empty);
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -235,8 +271,7 @@ function renderCalendar() {
 
     button.type = "button";
     button.className = "calendar-day";
-
-    button.textContent = day;
+    button.textContent = String(day);
     button.dataset.date = date;
 
     if (date < today) {
@@ -250,6 +285,9 @@ function renderCalendar() {
 
     if (date === selectedDate) {
       button.classList.add("selected");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.setAttribute("aria-pressed", "false");
     }
 
     button.addEventListener("click", () => {
@@ -261,34 +299,36 @@ function renderCalendar() {
 
   const todayParts = parseDate(today);
 
-  const isCurrentMonth =
+  const currentMonth =
     displayedYear === todayParts.year &&
     displayedMonth === todayParts.month;
 
-  const isPastMonth =
+  const pastMonth =
     displayedYear < todayParts.year ||
     (
       displayedYear === todayParts.year &&
       displayedMonth < todayParts.month
     );
 
-  el("prev-month").disabled =
-    isCurrentMonth || isPastMonth;
+  el("prev-month").disabled = currentMonth || pastMonth;
 }
 
-// ======================================================
-// SELECT APPOINTMENT DATE
-// ======================================================
+// ----------------------------------------------------------
+// SELECT DATE
+// ----------------------------------------------------------
 
 async function selectDate(date) {
+  if (date < indiaToday()) {
+    return;
+  }
+
   selectedDate = date;
   selectedTime = "";
 
   el("date").value = date;
   el("time").value = "";
 
-  el("selected-date-label").textContent =
-    readableDate(date);
+  el("selected-date-label").textContent = readableDate(date);
 
   el("result").replaceChildren();
 
@@ -297,9 +337,9 @@ async function selectDate(date) {
   await loadSlots(date);
 }
 
-// ======================================================
+// ----------------------------------------------------------
 // LOAD LIVE APPOINTMENT SLOTS
-// ======================================================
+// ----------------------------------------------------------
 
 async function loadSlots(date) {
   const requestId = ++slotRequestId;
@@ -322,7 +362,7 @@ async function loadSlots(date) {
     );
 
     if (!response.ok) {
-      throw new Error("Unable to load slots");
+      throw new Error("Unable to retrieve slots");
     }
 
     const data = await response.json();
@@ -332,7 +372,7 @@ async function loadSlots(date) {
     }
 
     if (!Array.isArray(data.slots)) {
-      throw new Error("Invalid slots response");
+      throw new Error("Invalid appointment slots response");
     }
 
     availableSlots = data.slots;
@@ -344,7 +384,6 @@ async function loadSlots(date) {
 
       button.type = "button";
       button.className = "time-slot";
-
       button.dataset.time = slot.time;
 
       const timeLabel = document.createElement("strong");
@@ -358,7 +397,8 @@ async function loadSlots(date) {
 
         availableCount++;
       } else {
-        capacityLabel.textContent = "Fully booked";
+        capacityLabel.textContent = "Unavailable";
+
         button.disabled = true;
         button.classList.add("full");
       }
@@ -381,17 +421,19 @@ async function loadSlots(date) {
       return;
     }
 
+    console.error("Heliora slots error:", error);
+
     message.textContent =
       "Unable to check availability. Please try again.";
   }
 }
 
-// ======================================================
-// SELECT APPOINTMENT TIME
-// ======================================================
+// ----------------------------------------------------------
+// SELECT TIME
+// ----------------------------------------------------------
 
 function selectTime(time) {
-  const slot = availableSlots.find(item =>
+  const slot = availableSlots.find((item) =>
     item.time === time && item.available
   );
 
@@ -403,20 +445,23 @@ function selectTime(time) {
 
   el("time").value = time;
 
-  document.querySelectorAll(".time-slot")
-    .forEach(button => {
-      button.classList.toggle(
-        "selected",
-        button.dataset.time === time
-      );
-    });
+  document.querySelectorAll(".time-slot").forEach((button) => {
+    const isSelected = button.dataset.time === time;
+
+    button.classList.toggle("selected", isSelected);
+
+    button.setAttribute(
+      "aria-pressed",
+      isSelected ? "true" : "false"
+    );
+  });
 
   el("result").replaceChildren();
 }
 
-// ======================================================
+// ----------------------------------------------------------
 // MONTH NAVIGATION
-// ======================================================
+// ----------------------------------------------------------
 
 el("prev-month").addEventListener("click", () => {
   displayedMonth--;
@@ -440,11 +485,11 @@ el("next-month").addEventListener("click", () => {
   renderCalendar();
 });
 
-// ======================================================
+// ----------------------------------------------------------
 // TEST SELECTION
-// ======================================================
+// ----------------------------------------------------------
 
-el("tests").addEventListener("change", event => {
+el("tests").addEventListener("change", (event) => {
   const checkbox = event.target;
 
   if (!checkbox.matches("input[data-test-id]")) {
@@ -460,16 +505,22 @@ el("tests").addEventListener("change", event => {
   }
 
   renderTests();
+
+  el("result").replaceChildren();
 });
 
 el("search").addEventListener("input", renderTests);
 
-// ======================================================
+// ----------------------------------------------------------
 // DEMO BOOKING PREVIEW
-// ======================================================
+// ----------------------------------------------------------
 
-el("booking").addEventListener("submit", async event => {
+el("booking").addEventListener("submit", async (event) => {
   event.preventDefault();
+
+  const result = el("result");
+
+  result.replaceChildren();
 
   if (!chosen.size) {
     alert("Please select at least one diagnostic test.");
@@ -484,10 +535,15 @@ el("booking").addEventListener("submit", async event => {
   const date = selectedDate;
   const time = selectedTime;
 
-  // Recheck availability before displaying preview
+  // Recheck availability before showing the preview.
   await loadSlots(date);
 
-  const slot = availableSlots.find(item =>
+  // The selected date might have changed while loading.
+  if (selectedDate !== date) {
+    return;
+  }
+
+  const slot = availableSlots.find((item) =>
     item.time === time && item.available
   );
 
@@ -502,12 +558,7 @@ el("booking").addEventListener("submit", async event => {
     return;
   }
 
-  // Restore selected time
   selectTime(time);
-
-  const result = el("result");
-
-  result.replaceChildren();
 
   const notice = document.createElement("div");
   notice.className = "notice success";
@@ -517,11 +568,11 @@ el("booking").addEventListener("submit", async event => {
 
   const details = document.createElement("p");
   details.textContent =
-    `${readableDate(date)} at ${displayTime(time)}`;
+    `${readableDate(date)} at ${displayTime(time)} — Centre visit`;
 
   const warning = document.createElement("p");
   warning.textContent =
-    "This is a demonstration only. No appointment has been saved and no confirmation email has been sent.";
+    "This is a demonstration only. No appointment has been saved, no patient details have been stored, and no confirmation email has been sent.";
 
   notice.append(heading, details, warning);
 
@@ -533,11 +584,14 @@ el("booking").addEventListener("submit", async event => {
   });
 });
 
-// ======================================================
-// INITIALIZE
-// ======================================================
+// ----------------------------------------------------------
+// START APPLICATION
+// ----------------------------------------------------------
 
 el("type").value = "Centre visit";
 
 initializeCalendar();
+
 loadTests();
+
+console.log("Heliora Care booking calendar initialized.");
