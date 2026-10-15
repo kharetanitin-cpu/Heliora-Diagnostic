@@ -24,6 +24,14 @@ let displayedYear;
 
 let slotRequestId = 0;
 
+// Keep false until public booking security is complete.
+// Never put BOOKING_TEST_SECRET in browser JavaScript.
+const PUBLIC_BOOKINGS_ENABLED = false;
+
+let submitting = false;
+let pendingSubmissionId = null;
+let pendingPayloadSignature = null;
+
 // ----------------------------------------------------------
 // DATE AND TIME HELPERS
 // ----------------------------------------------------------
@@ -165,6 +173,7 @@ function renderTests() {
     name.textContent = test.test_name;
 
     const category = document.createElement("small");
+
     category.textContent =
       `${test.category || "Diagnostic test"} · Centre visit`;
 
@@ -368,7 +377,7 @@ async function loadSlots(date) {
     const data = await response.json();
 
     if (requestId !== slotRequestId) {
-      return;
+      return false;
     }
 
     if (!Array.isArray(data.slots)) {
@@ -416,15 +425,19 @@ async function loadSlots(date) {
       ? `${availableCount} appointment times available.`
       : "No appointment times available for this date.";
 
+    return true;
+
   } catch (error) {
     if (requestId !== slotRequestId) {
-      return;
+      return false;
     }
 
     console.error("Heliora slots error:", error);
 
     message.textContent =
       "Unable to check availability. Please try again.";
+
+    return false;
   }
 }
 
@@ -512,69 +525,27 @@ el("tests").addEventListener("change", (event) => {
 el("search").addEventListener("input", renderTests);
 
 // ----------------------------------------------------------
-// DEMO BOOKING PREVIEW
+// BOOKING NOTIFICATIONS
 // ----------------------------------------------------------
 
-el("booking").addEventListener("submit", async (event) => {
-  event.preventDefault();
-
+function showBookingNotice(title, message, success = false) {
   const result = el("result");
 
   result.replaceChildren();
 
-  if (!chosen.size) {
-    alert("Please select at least one diagnostic test.");
-    return;
-  }
-
-  if (!selectedDate || !selectedTime) {
-    alert("Please select an appointment date and time.");
-    return;
-  }
-
-  const date = selectedDate;
-  const time = selectedTime;
-
-  // Recheck availability before showing the preview.
-  await loadSlots(date);
-
-  // The selected date might have changed while loading.
-  if (selectedDate !== date) {
-    return;
-  }
-
-  const slot = availableSlots.find((item) =>
-    item.time === time && item.available
-  );
-
-  if (!slot) {
-    selectedTime = "";
-    el("time").value = "";
-
-    alert(
-      "This appointment time is no longer available. Please select another."
-    );
-
-    return;
-  }
-
-  selectTime(time);
-
   const notice = document.createElement("div");
-  notice.className = "notice success";
+
+  notice.className = success
+    ? "notice success"
+    : "notice";
 
   const heading = document.createElement("b");
-  heading.textContent = "Booking Preview";
+  heading.textContent = title;
 
   const details = document.createElement("p");
-  details.textContent =
-    `${readableDate(date)} at ${displayTime(time)} — Centre visit`;
+  details.textContent = message;
 
-  const warning = document.createElement("p");
-  warning.textContent =
-    "This is a demonstration only. No appointment has been saved, no patient details have been stored, and no confirmation email has been sent.";
-
-  notice.append(heading, details, warning);
+  notice.append(heading, details);
 
   result.appendChild(notice);
 
@@ -582,6 +553,271 @@ el("booking").addEventListener("submit", async (event) => {
     behavior: "smooth",
     block: "nearest"
   });
+}
+
+// ----------------------------------------------------------
+// UNIQUE BOOKING SUBMISSION ID
+// ----------------------------------------------------------
+
+function newSubmissionId() {
+  if (
+    globalThis.crypto &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  throw new Error(
+    "Secure booking identifiers are unavailable in this browser."
+  );
+}
+
+// ----------------------------------------------------------
+// BOOKING FORM SUBMISSION
+// ----------------------------------------------------------
+
+el("booking").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (submitting) {
+    return;
+  }
+
+  // Validate selected tests.
+
+  if (!chosen.size) {
+    showBookingNotice(
+      "Test required",
+      "Please select at least one diagnostic test."
+    );
+
+    return;
+  }
+
+  // Validate appointment selection.
+
+  if (!selectedDate || !selectedTime) {
+    showBookingNotice(
+      "Appointment required",
+      "Please select an appointment date and time."
+    );
+
+    return;
+  }
+
+  if (selectedDate < indiaToday()) {
+    showBookingNotice(
+      "Invalid date",
+      "Please select a future appointment date."
+    );
+
+    return;
+  }
+
+  // Read patient details.
+
+  const patientName = el("name").value.trim();
+  const patientPhone = el("phone").value.trim();
+  const patientEmail = el("email").value.trim();
+
+  // Validate patient name.
+
+  if (!patientName || patientName.length > 120) {
+    showBookingNotice(
+      "Check patient name",
+      "Please enter a valid patient name."
+    );
+
+    return;
+  }
+
+  // Validate mobile number.
+
+  if (!/^[0-9+()\s-]{10,15}$/.test(patientPhone)) {
+    showBookingNotice(
+      "Check mobile number",
+      "Please enter a valid mobile number."
+    );
+
+    return;
+  }
+
+  // Validate email.
+
+  if (!el("email").checkValidity() || !patientEmail) {
+    showBookingNotice(
+      "Check email",
+      "Please enter a valid email address."
+    );
+
+    return;
+  }
+
+  const date = selectedDate;
+  const time = selectedTime;
+
+  const button = el("submit-booking");
+
+  submitting = true;
+  button.disabled = true;
+
+  const originalLabel = button.textContent;
+
+  button.textContent = "Checking availability...";
+
+  try {
+    // Recheck availability before continuing.
+
+    const loaded = await loadSlots(date);
+
+    if (!loaded) {
+      showBookingNotice(
+        "Availability check failed",
+        "Please try again after refreshing appointment availability."
+      );
+
+      return;
+    }
+
+    if (selectedDate !== date || selectedTime !== time) {
+      return;
+    }
+
+    const slot = availableSlots.find((item) =>
+      item.time === time && item.available
+    );
+
+    if (!slot) {
+      selectedTime = "";
+      el("time").value = "";
+
+      showBookingNotice(
+        "Time unavailable",
+        "This appointment time is no longer available. Please select another."
+      );
+
+      return;
+    }
+
+    selectTime(time);
+
+    // ------------------------------------------------------
+    // SAFE STAGING MODE
+    // ------------------------------------------------------
+
+    if (!PUBLIC_BOOKINGS_ENABLED) {
+      showBookingNotice(
+        "Booking Preview",
+        `${readableDate(date)} at ${displayTime(time)} — Centre visit. ` +
+        "Demo only: no appointment has been saved, " +
+        "no patient details have been sent, " +
+        "and no confirmation email has been sent.",
+        true
+      );
+
+      return;
+    }
+
+    // ------------------------------------------------------
+    // FUTURE PUBLIC BOOKING SUBMISSION
+    // This section remains inactive while demo mode is on.
+    // ------------------------------------------------------
+
+    const payload = {
+      patient_name: patientName,
+      patient_phone: patientPhone,
+      patient_email: patientEmail,
+      appointment_type: "Centre visit",
+      preferred_date: date,
+      preferred_time: time,
+      test_ids: [...chosen].sort((a, b) => a - b)
+    };
+
+    // Reuse the same submission ID for an identical retry.
+
+    const signature = JSON.stringify(payload);
+
+    if (signature !== pendingPayloadSignature) {
+      pendingSubmissionId = newSubmissionId();
+      pendingPayloadSignature = signature;
+    }
+
+    payload.submission_id = pendingSubmissionId;
+
+    button.textContent = "Submitting appointment...";
+
+    const response = await fetch("/api/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      if (response.status === 409) {
+        showBookingNotice(
+          "Booking not completed",
+          data.error ||
+          "This request was already submitted or the selected time is full. " +
+          "Please contact the centre if you already received a booking reference."
+        );
+
+        await loadSlots(date);
+      } else {
+        showBookingNotice(
+          "Unable to submit",
+          data.error ||
+          "Please try again later. Your booking is not confirmed."
+        );
+      }
+
+      return;
+    }
+
+    if (!data.booking_reference) {
+      showBookingNotice(
+        "Confirmation pending",
+        "The server did not provide a booking reference. " +
+        "Please contact the centre before trying again."
+      );
+
+      return;
+    }
+
+    // Display booking confirmation.
+
+    showBookingNotice(
+      "Appointment request received",
+      `Reference: ${data.booking_reference}. ` +
+      `${readableDate(date)} at ${displayTime(time)}. ` +
+      `Status: ${data.status || "Pending"}. ` +
+      "A confirmation email has not been verified.",
+      true
+    );
+
+    pendingSubmissionId = null;
+    pendingPayloadSignature = null;
+
+    await loadSlots(date);
+
+  } catch (error) {
+    console.error("Heliora booking error:", error);
+
+    showBookingNotice(
+      "Unable to complete request",
+      "Please check your connection. " +
+      "If you already submitted, contact the centre " +
+      "before attempting another booking."
+    );
+
+  } finally {
+    submitting = false;
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
 });
 
 // ----------------------------------------------------------
