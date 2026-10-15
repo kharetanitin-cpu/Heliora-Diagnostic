@@ -42,10 +42,11 @@
       and view available appointment times at Heliora Diagnostic.
     </p>
 
-    <div class="notice">
+    <div class="notice" id="demo-notice">
       <b>DEMO ONLY:</b>
-      Appointment availability is retrieved from our staging database,
-      but this form does not create real bookings or send emails.
+      Appointment availability is retrieved from our staging database.
+      This form currently provides a booking preview only.
+      No appointment is created and no confirmation email is sent.
       Please use fictional patient information.
     </div>
 
@@ -68,7 +69,8 @@
 
       <label for="type">Appointment type</label>
 
-      <select id="type">
+      <select id="type" name="appointment_type">
+
         <option value="Centre visit">
           Visit Heliora Diagnostic
         </option>
@@ -76,6 +78,7 @@
         <option value="Home sample collection" disabled>
           Home Sample Collection — Coming Soon
         </option>
+
       </select>
 
       <!-- DIAGNOSTIC TESTS -->
@@ -156,17 +159,9 @@
 
             <div class="calendar-legend">
 
-              <span>
-                ● Available
-              </span>
-
-              <span>
-                ● Limited
-              </span>
-
-              <span>
-                ● Fully booked
-              </span>
+              <span>● Available</span>
+              <span>● Limited</span>
+              <span>● Fully booked</span>
 
             </div>
 
@@ -208,11 +203,13 @@
 
         <input
           id="date"
+          name="preferred_date"
           type="hidden"
         >
 
         <input
           id="time"
+          name="preferred_time"
           type="hidden"
         >
 
@@ -232,7 +229,10 @@
 
           <input
             id="name"
+            name="patient_name"
+            type="text"
             required
+            maxlength="120"
             autocomplete="name"
             placeholder="Demo Patient"
           >
@@ -247,9 +247,11 @@
 
           <input
             id="phone"
+            name="patient_phone"
             type="tel"
             inputmode="tel"
             required
+            maxlength="15"
             placeholder="10-digit mobile"
           >
 
@@ -263,38 +265,50 @@
 
       <input
         id="email"
+        name="patient_email"
         type="email"
         required
+        maxlength="254"
+        autocomplete="email"
         placeholder="demo@example.com"
       >
 
-      <label for="notes">
-        Notes (optional)
-      </label>
+      <!-- PRIVACY NOTICE -->
 
-      <textarea
-        id="notes"
-        rows="2"
-        placeholder="Do not enter medical details"
-      ></textarea>
+      <div class="notice" style="margin-top:20px">
 
-      <p class="mini muted">
-        Do not enter real patient information or sensitive medical
-        history during testing.
-      </p>
+        <strong>Patient information</strong>
+
+        <p class="mini">
+          During this testing phase, please use fictional patient details.
+          Do not enter medical history or other sensitive personal
+          information.
+        </p>
+
+        <p class="mini">
+          Appointment requests will only become available after
+          the booking system and its privacy safeguards are ready.
+        </p>
+
+      </div>
 
       <!-- SUBMIT BUTTON -->
 
       <button
+        id="submit-booking"
         class="btn"
         type="submit"
       >
         Preview Booking Request →
       </button>
 
+      <!-- BOOKING RESULT -->
+
       <div
         id="result"
+        role="status"
         aria-live="polite"
+        aria-atomic="true"
       ></div>
 
     </form>
@@ -329,12 +343,12 @@
 
         <p>
           <strong>Booking status:</strong>
-          <span class="status">
+          <span class="status" id="booking-status">
             Demo preview
           </span>
         </p>
 
-        <p class="mini muted">
+        <p class="mini muted" id="booking-status-description">
           Available appointment times are retrieved from the
           Heliora Care staging database.
           Appointment submissions are not enabled yet.
