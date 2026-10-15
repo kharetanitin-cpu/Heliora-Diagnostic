@@ -1,5 +1,7 @@
-// Heliora Care — Staging Backend
-// Appointment submissions remain disabled until security testing is complete.
+// ============================================================
+// HELIORA CARE — STAGING BACKEND
+// Cloudflare Workers + D1
+// ============================================================
 
 const json = (data, status = 200, extra = {}) =>
   new Response(JSON.stringify(data), {
@@ -12,12 +14,11 @@ const json = (data, status = 200, extra = {}) =>
     }
   });
 
-const sameOrigin = request => {
-  const origin = request.headers.get("Origin");
-  return !origin || origin === new URL(request.url).origin;
-};
 
-// Get today's date and current time in India.
+// ============================================================
+// DATE AND TIME HELPERS
+// ============================================================
+
 function indiaNow() {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
@@ -40,7 +41,10 @@ function indiaNow() {
 }
 
 function validDate(value) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
+  if (
+    typeof value !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)
+  ) {
     return false;
   }
 
@@ -57,62 +61,18 @@ function minutes(time) {
   return hour * 60 + minute;
 }
 
-function formatTime(totalMinutes) {
-  const hour = Math.floor(totalMinutes / 60);
-  const minute = totalMinutes % 60;
-
+function formatTime(value) {
   return (
-    String(hour).padStart(2, "0") +
+    String(Math.floor(value / 60)).padStart(2, "0") +
     ":" +
-    String(minute).padStart(2, "0")
+    String(value % 60).padStart(2, "0")
   );
 }
 
-// Existing patient validation.
-// Reserved for the future booking submission API.
-function validBody(b) {
-  if (!b || typeof b !== "object" || Array.isArray(b)) return false;
 
-  if (!/^[\p{L} .'-]{2,100}$/u.test(b.patient_name || "")) {
-    return false;
-  }
-
-  if (!/^\+?[0-9 ()-]{8,20}$/.test(b.patient_phone || "")) {
-    return false;
-  }
-
-  if (
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.patient_email || "") ||
-    b.patient_email.length > 254
-  ) {
-    return false;
-  }
-
-  // Home collection is not available yet.
-  if (b.appointment_type !== "Centre visit") {
-    return false;
-  }
-
-  if (!validDate(b.preferred_date)) {
-    return false;
-  }
-
-  if (b.preferred_date < indiaNow().date) {
-    return false;
-  }
-
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(b.preferred_time || "")) {
-    return false;
-  }
-
-  return (
-    Array.isArray(b.test_ids) &&
-    b.test_ids.length > 0 &&
-    b.test_ids.length <= 20 &&
-    b.test_ids.every(id => Number.isSafeInteger(id) && id > 0) &&
-    new Set(b.test_ids).size === b.test_ids.length
-  );
-}
+// ============================================================
+// BOOKING SETTINGS
+// ============================================================
 
 async function getBookingSettings(env) {
   return env.DB.prepare(`
@@ -127,9 +87,7 @@ async function getBookingSettings(env) {
   `).first();
 }
 
-async function getAvailableSlots(env, date) {
-  const settings = await getBookingSettings(env);
-
+function checkSettings(settings) {
   if (!settings) {
     throw new Error("Booking settings not configured");
   }
@@ -145,6 +103,7 @@ async function getAvailableSlots(env, date) {
     duration < 5 ||
     !Number.isInteger(capacity) ||
     capacity < 1 ||
+    capacity > 5 ||
     opening < 0 ||
     closing > 1440 ||
     closing <= opening
@@ -152,26 +111,45 @@ async function getAvailableSlots(env, date) {
     throw new Error("Invalid booking settings");
   }
 
+  return {
+    duration,
+    capacity,
+    opening,
+    closing
+  };
+}
+
+
+// ============================================================
+// AVAILABLE APPOINTMENT SLOTS
+// ============================================================
+
+async function getAvailableSlots(env, date) {
+  const settings = await getBookingSettings(env);
+
+  const {
+    duration,
+    capacity,
+    opening,
+    closing
+  } = checkSettings(settings);
+
   const { results } = await env.DB.prepare(`
     SELECT
-      preferred_time,
-      COUNT(*) AS booked
-    FROM appointments
-    WHERE preferred_date = ?
-      AND status NOT IN ('Cancelled', 'Rejected')
-      AND appointment_type = 'Centre visit'
-    GROUP BY preferred_time
+      appointment_time,
+      booked_count
+    FROM appointment_slot_capacity
+    WHERE appointment_date = ?
   `).bind(date).all();
 
   const bookedByTime = new Map(
     results.map(row => [
-      row.preferred_time,
-      Number(row.booked)
+      row.appointment_time,
+      Number(row.booked_count)
     ])
   );
 
   const current = indiaNow();
-
   const slots = [];
 
   for (
@@ -187,7 +165,10 @@ async function getAvailableSlots(env, date) {
 
     const past =
       date < current.date ||
-      (date === current.date && time <= current.time);
+      (
+        date === current.date &&
+        time <= current.time
+      );
 
     slots.push({
       time,
@@ -210,12 +191,428 @@ async function getAvailableSlots(env, date) {
   };
 }
 
+
+// ============================================================
+// PATIENT VALIDATION
+// ============================================================
+
+function validBody(body) {
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof body.patient_name !== "string" ||
+    !/^[\p{L} .'-]{2,100}$/u.test(body.patient_name)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof body.patient_phone !== "string" ||
+    !/^\+?[0-9 ()-]{8,20}$/.test(body.patient_phone)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof body.patient_email !== "string" ||
+    body.patient_email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.patient_email)
+  ) {
+    return false;
+  }
+
+  // Home collection is not available yet.
+
+  if (body.appointment_type !== "Centre visit") {
+    return false;
+  }
+
+  if (!validDate(body.preferred_date)) {
+    return false;
+  }
+
+  if (
+    typeof body.preferred_time !== "string" ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(body.preferred_time)
+  ) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(body.test_ids) ||
+    body.test_ids.length < 1 ||
+    body.test_ids.length > 20
+  ) {
+    return false;
+  }
+
+  if (
+    !body.test_ids.every(
+      id => Number.isSafeInteger(id) && id > 0
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    new Set(body.test_ids).size !== body.test_ids.length
+  ) {
+    return false;
+  }
+
+  if (
+    typeof body.submission_id !== "string" ||
+    !/^[a-zA-Z0-9_-]{16,100}$/.test(body.submission_id)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+
+// ============================================================
+// VALIDATE SELECTED TESTS
+// ============================================================
+
+async function validateSelectedTests(env, testIds) {
+  const placeholders = testIds.map(() => "?").join(",");
+
+  const { results } = await env.DB.prepare(`
+    SELECT id
+    FROM diagnostic_tests
+    WHERE active = 1
+      AND id IN (${placeholders})
+  `).bind(...testIds).all();
+
+  return results.length === testIds.length;
+}
+
+
+// ============================================================
+// VALIDATE SELECTED APPOINTMENT SLOT
+// ============================================================
+
+async function verifyAppointmentSlot(env, date, time) {
+  const current = indiaNow();
+
+  if (
+    date < current.date ||
+    (
+      date === current.date &&
+      time <= current.time
+    )
+  ) {
+    return false;
+  }
+
+  const settings = await getBookingSettings(env);
+
+  const {
+    duration,
+    opening,
+    closing
+  } = checkSettings(settings);
+
+  const selected = minutes(time);
+
+  return (
+    selected >= opening &&
+    selected + duration <= closing &&
+    (selected - opening) % duration === 0
+  );
+}
+
+
+// ============================================================
+// BOOKING REFERENCE
+// ============================================================
+
+function generateBookingReference() {
+  const date = indiaNow().date.replace(/-/g, "");
+
+  const random = crypto.randomUUID()
+    .replace(/-/g, "")
+    .slice(0, 12)
+    .toUpperCase();
+
+  return `HLC-${date}-${random}`;
+}
+
+
+// ============================================================
+// BOOKING SUBMISSION
+// ============================================================
+
+async function createBooking(request, env) {
+
+  // Keep booking intake disabled until testing is complete.
+
+  if (env.ENABLE_BOOKINGS !== "true") {
+    return json({
+      error:
+        "Bookings are not enabled. This is a staging deployment."
+    }, 503);
+  }
+
+  if (!env.DB) {
+    return json({
+      error: "Database not configured"
+    }, 503);
+  }
+
+  const origin = request.headers.get("Origin");
+
+  if (
+    !origin ||
+    origin !== new URL(request.url).origin
+  ) {
+    return json({
+      error: "Origin not permitted"
+    }, 403);
+  }
+
+  const contentType =
+    request.headers.get("content-type") || "";
+
+  if (
+    !contentType.toLowerCase().startsWith(
+      "application/json"
+    )
+  ) {
+    return json({
+      error: "Content-Type must be application/json"
+    }, 415);
+  }
+
+  const contentLength = Number(
+    request.headers.get("content-length") || 0
+  );
+
+  if (contentLength > 12000) {
+    return json({
+      error: "Request too large"
+    }, 413);
+  }
+
+  let body;
+
+  try {
+    const raw = await request.text();
+
+    if (new TextEncoder().encode(raw).length > 12000) {
+      return json({
+        error: "Request too large"
+      }, 413);
+    }
+
+    body = JSON.parse(raw);
+
+  } catch {
+    return json({
+      error: "Invalid JSON request"
+    }, 400);
+  }
+
+  if (!validBody(body)) {
+    return json({
+      error: "Invalid booking information"
+    }, 400);
+  }
+
+  // Prevent duplicate submissions.
+
+  const existing = await env.DB.prepare(`
+    SELECT booking_reference
+    FROM appointments
+    WHERE submission_id = ?
+    LIMIT 1
+  `).bind(body.submission_id).first();
+
+  if (existing) {
+    return json({
+      error: "Booking already submitted",
+      booking_reference: existing.booking_reference
+    }, 409);
+  }
+
+  // Validate date and time.
+
+  const validSlot = await verifyAppointmentSlot(
+    env,
+    body.preferred_date,
+    body.preferred_time
+  );
+
+  if (!validSlot) {
+    return json({
+      error: "Invalid or expired appointment slot"
+    }, 400);
+  }
+
+  // Validate diagnostic tests.
+
+  const testsValid = await validateSelectedTests(
+    env,
+    body.test_ids
+  );
+
+  if (!testsValid) {
+    return json({
+      error: "One or more tests are unavailable"
+    }, 400);
+  }
+
+  const reference = generateBookingReference();
+
+  // ----------------------------------------------------------
+  // ATOMIC DATABASE TRANSACTION
+  //
+  // Current booking capacity is fixed at 5.
+  //
+  // The database CHECK constraint prevents booked_count
+  // from exceeding 5.
+  //
+  // D1 batch executes the statements transactionally.
+  // If a statement fails, the transaction is rolled back.
+  //
+  // ----------------------------------------------------------
+
+  const statements = [];
+
+  // Reserve appointment capacity.
+
+  statements.push(
+    env.DB.prepare(`
+      INSERT INTO appointment_slot_capacity (
+        appointment_date,
+        appointment_time,
+        booked_count
+      )
+      VALUES (?, ?, 1)
+
+      ON CONFLICT (
+        appointment_date,
+        appointment_time
+      )
+
+      DO UPDATE SET
+        booked_count = booked_count + 1
+    `).bind(
+      body.preferred_date,
+      body.preferred_time
+    )
+  );
+
+  // Save appointment.
+
+  statements.push(
+    env.DB.prepare(`
+      INSERT INTO appointments (
+        booking_reference,
+        patient_name,
+        patient_email,
+        patient_phone,
+        appointment_type,
+        preferred_date,
+        preferred_time,
+        collection_address,
+        status,
+        submission_id
+      )
+
+      VALUES (
+        ?, ?, ?, ?, ?, ?, ?, NULL, 'Pending', ?
+      )
+    `).bind(
+      reference,
+      body.patient_name.trim(),
+      body.patient_email.trim(),
+      body.patient_phone.trim(),
+      body.appointment_type,
+      body.preferred_date,
+      body.preferred_time,
+      body.submission_id
+    )
+  );
+
+  // Save selected diagnostic tests.
+
+  for (const testId of body.test_ids) {
+    statements.push(
+      env.DB.prepare(`
+        INSERT INTO appointment_tests (
+          appointment_id,
+          test_id
+        )
+
+        SELECT id, ?
+        FROM appointments
+        WHERE submission_id = ?
+      `).bind(
+        testId,
+        body.submission_id
+      )
+    );
+  }
+
+  try {
+    await env.DB.batch(statements);
+
+    return json({
+      success: true,
+      message: "Appointment request received",
+      booking_reference: reference,
+      appointment_date: body.preferred_date,
+      appointment_time: body.preferred_time,
+      status: "Pending"
+    }, 201);
+
+  } catch (error) {
+    console.error("Booking transaction failed", error);
+
+    const duplicate = await env.DB.prepare(`
+      SELECT booking_reference
+      FROM appointments
+      WHERE submission_id = ?
+      LIMIT 1
+    `).bind(body.submission_id).first();
+
+    if (duplicate) {
+      return json({
+        error: "Booking already submitted",
+        booking_reference: duplicate.booking_reference
+      }, 409);
+    }
+
+    return json({
+      error:
+        "Booking could not be completed. Please choose another available slot."
+    }, 409);
+  }
+}
+
+
+// ============================================================
+// MAIN WORKER
+// ============================================================
+
 export default {
   async fetch(request, env) {
+
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Health check
+    // --------------------------------------------------------
+    // HEALTH CHECK
+    // --------------------------------------------------------
+
     if (path === "/api/health") {
       return json({
         ok: true,
@@ -225,17 +622,30 @@ export default {
       });
     }
 
-    // Admin API remains disabled until authentication is implemented.
+    // --------------------------------------------------------
+    // ADMIN API — DISABLED
+    // --------------------------------------------------------
+
     if (path.startsWith("/api/admin/")) {
       return json({
-        error: "Admin API disabled pending authentication and role checks."
+        error:
+          "Admin API disabled pending authentication and role checks."
       }, 403);
     }
 
-    // Diagnostic test catalogue
-    if (path === "/api/tests" && request.method === "GET") {
+    // --------------------------------------------------------
+    // DIAGNOSTIC TESTS
+    // --------------------------------------------------------
+
+    if (
+      path === "/api/tests" &&
+      request.method === "GET"
+    ) {
+
       if (!env.DB) {
-        return json({ error: "Database not configured" }, 503);
+        return json({
+          error: "Database not configured"
+        }, 503);
       }
 
       try {
@@ -252,87 +662,109 @@ export default {
           LIMIT 300
         `).all();
 
-        return json({ tests: results });
+        return json({
+          tests: results
+        });
 
       } catch (error) {
-        console.error("Unable to load tests");
-        return json({ error: "Unable to load tests" }, 503);
+        console.error("Unable to load tests", error);
+
+        return json({
+          error: "Unable to load tests"
+        }, 503);
       }
     }
 
-    // NEW: Available appointment time slots
+    // --------------------------------------------------------
+    // AVAILABLE SLOTS
+    // --------------------------------------------------------
+
     if (path === "/api/slots") {
+
       if (request.method !== "GET") {
-        return json(
-          { error: "Method not allowed" },
-          405,
-          { allow: "GET" }
-        );
+        return json({
+          error: "Method not allowed"
+        }, 405, {
+          allow: "GET"
+        });
       }
 
       if (!env.DB) {
-        return json({ error: "Database not configured" }, 503);
+        return json({
+          error: "Database not configured"
+        }, 503);
       }
 
       const date = url.searchParams.get("date");
 
       if (!validDate(date)) {
         return json({
-          error: "Please provide a valid date in YYYY-MM-DD format."
+          error:
+            "Please provide a valid date in YYYY-MM-DD format."
         }, 400);
       }
 
       try {
-        const result = await getAvailableSlots(env, date);
+        const result = await getAvailableSlots(
+          env,
+          date
+        );
+
         return json(result);
 
       } catch (error) {
-        console.error("Unable to retrieve booking slots");
-
-        return json({
-          error: "Unable to retrieve available appointment times."
-        }, 503);
-      }
-    }
-
-    // Booking submissions remain disabled.
-    if (path === "/api/bookings") {
-      if (request.method !== "POST") {
-        return json(
-          { error: "Method not allowed" },
-          405,
-          { allow: "POST" }
+        console.error(
+          "Unable to retrieve appointment slots",
+          error
         );
-      }
 
-      if (env.ENABLE_BOOKINGS !== "true") {
         return json({
-          error: "Bookings are not enabled. This is a staging deployment."
+          error:
+            "Unable to retrieve available appointment times."
         }, 503);
       }
-
-      if (!sameOrigin(request)) {
-        return json({ error: "Origin not permitted" }, 403);
-      }
-
-      if (!env.DB) {
-        return json({ error: "Database not configured" }, 503);
-      }
-
-      if (Number(request.headers.get("content-length") || 0) > 12000) {
-        return json({ error: "Request too large" }, 413);
-      }
-
-      // Booking writes remain locked until server-side capacity
-      // enforcement, spam protection, and notifications are ready.
-      return json({
-        error: "Booking intake locked until security checks are complete."
-      }, 503);
     }
+
+    // --------------------------------------------------------
+    // BOOKING SUBMISSIONS
+    // --------------------------------------------------------
+
+    if (path === "/api/bookings") {
+
+      if (request.method !== "POST") {
+        return json({
+          error: "Method not allowed"
+        }, 405, {
+          allow: "POST"
+        });
+      }
+
+      try {
+        return await createBooking(request, env);
+
+      } catch (error) {
+        console.error("Booking request failed", error);
+
+        return json({
+          error:
+            "Unable to process the booking request."
+        }, 503);
+      }
+    }
+
+    // --------------------------------------------------------
+    // UNKNOWN API ROUTES
+    // --------------------------------------------------------
 
     if (path.startsWith("/api/")) {
-      return json({ error: "Not found" }, 404);
+      return json({
+        error: "Not found"
+      }, 404);
     }
+
+    // --------------------------------------------------------
+    // STATIC WEBSITE
+    // --------------------------------------------------------
 
     return env.ASSETS.fetch(request);
   }
