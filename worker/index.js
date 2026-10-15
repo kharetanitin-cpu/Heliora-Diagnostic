@@ -1,10 +1,25 @@
 // ============================================================
 // HELIORA CARE — STAGING BACKEND
-// Cloudflare Workers + D1
+// Cloudflare Workers + Cloudflare D1
+// ============================================================
+//
+// Production website must remain unchanged.
+//
+// Required bindings:
+// DB                  Cloudflare D1
+// ASSETS              Static assets
+// ENABLE_BOOKINGS     "false"
+// BOOKING_TEST_SECRET Cloudflare encrypted secret
+//
 // ============================================================
 
-const json = (data, status = 200, extra = {}) =>
-  new Response(JSON.stringify(data), {
+
+// ------------------------------------------------------------
+// RESPONSE HELPERS
+// ------------------------------------------------------------
+
+function json(data, status = 200, extra = {}) {
+  return new Response(JSON.stringify(data), {
     status,
     headers: {
       "content-type": "application/json; charset=utf-8",
@@ -13,11 +28,12 @@ const json = (data, status = 200, extra = {}) =>
       ...extra
     }
   });
+}
 
 
-// ============================================================
-// DATE AND TIME HELPERS
-// ============================================================
+// ------------------------------------------------------------
+// INDIA DATE AND TIME
+// ------------------------------------------------------------
 
 function indiaNow() {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -40,6 +56,7 @@ function indiaNow() {
   };
 }
 
+
 function validDate(value) {
   if (
     typeof value !== "string" ||
@@ -56,10 +73,12 @@ function validDate(value) {
   );
 }
 
+
 function minutes(time) {
   const [hour, minute] = time.split(":").map(Number);
   return hour * 60 + minute;
 }
+
 
 function formatTime(value) {
   return (
@@ -70,9 +89,9 @@ function formatTime(value) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // BOOKING SETTINGS
-// ============================================================
+// ------------------------------------------------------------
 
 async function getBookingSettings(env) {
   return env.DB.prepare(`
@@ -86,6 +105,7 @@ async function getBookingSettings(env) {
     WHERE id = 1
   `).first();
 }
+
 
 function checkSettings(settings) {
   if (!settings) {
@@ -120,9 +140,9 @@ function checkSettings(settings) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // AVAILABLE APPOINTMENT SLOTS
-// ============================================================
+// ------------------------------------------------------------
 
 async function getAvailableSlots(env, date) {
   const settings = await getBookingSettings(env);
@@ -192,9 +212,9 @@ async function getAvailableSlots(env, date) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // PATIENT VALIDATION
-// ============================================================
+// ------------------------------------------------------------
 
 function validBody(body) {
   if (
@@ -277,9 +297,9 @@ function validBody(body) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // VALIDATE SELECTED TESTS
-// ============================================================
+// ------------------------------------------------------------
 
 async function validateSelectedTests(env, testIds) {
   const placeholders = testIds.map(() => "?").join(",");
@@ -295,9 +315,9 @@ async function validateSelectedTests(env, testIds) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // VALIDATE SELECTED APPOINTMENT SLOT
-// ============================================================
+// ------------------------------------------------------------
 
 async function verifyAppointmentSlot(env, date, time) {
   const current = indiaNow();
@@ -330,9 +350,9 @@ async function verifyAppointmentSlot(env, date, time) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // BOOKING REFERENCE
-// ============================================================
+// ------------------------------------------------------------
 
 function generateBookingReference() {
   const date = indiaNow().date.replace(/-/g, "");
@@ -346,15 +366,22 @@ function generateBookingReference() {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
 // BOOKING SUBMISSION
-// ============================================================
+// ------------------------------------------------------------
 
-async function createBooking(request, env) {
+async function createBooking(
+  request,
+  env,
+  authorizedTest = false
+) {
 
-  // Keep booking intake disabled until testing is complete.
+  // Public bookings remain disabled until activation.
 
-  if (env.ENABLE_BOOKINGS !== "true") {
+  if (
+    !authorizedTest &&
+    env.ENABLE_BOOKINGS !== "true"
+  ) {
     return json({
       error:
         "Bookings are not enabled. This is a staging deployment."
@@ -367,11 +394,14 @@ async function createBooking(request, env) {
     }, 503);
   }
 
+  // Normal booking requests must come from the same origin.
+  // Authorized test requests can use an API client.
+
   const origin = request.headers.get("Origin");
 
   if (
-    !origin ||
-    origin !== new URL(request.url).origin
+    !authorizedTest &&
+    (!origin || origin !== new URL(request.url).origin)
   ) {
     return json({
       error: "Origin not permitted"
@@ -442,7 +472,7 @@ async function createBooking(request, env) {
     }, 409);
   }
 
-  // Validate date and time.
+  // Validate appointment date and time.
 
   const validSlot = await verifyAppointmentSlot(
     env,
@@ -456,7 +486,7 @@ async function createBooking(request, env) {
     }, 400);
   }
 
-  // Validate diagnostic tests.
+  // Validate selected diagnostic tests.
 
   const testsValid = await validateSelectedTests(
     env,
@@ -473,20 +503,21 @@ async function createBooking(request, env) {
 
   // ----------------------------------------------------------
   // ATOMIC DATABASE TRANSACTION
+  // ----------------------------------------------------------
   //
-  // Current booking capacity is fixed at 5.
+  // D1 batch executes these statements transactionally.
   //
-  // The database CHECK constraint prevents booked_count
-  // from exceeding 5.
+  // Current capacity is limited to five by the database
+  // CHECK constraint on appointment_slot_capacity.
   //
-  // D1 batch executes the statements transactionally.
-  // If a statement fails, the transaction is rolled back.
+  // If capacity is exceeded, the transaction fails and
+  // its changes are rolled back.
   //
   // ----------------------------------------------------------
 
   const statements = [];
 
-  // Reserve appointment capacity.
+  // 1. Reserve appointment capacity.
 
   statements.push(
     env.DB.prepare(`
@@ -510,7 +541,7 @@ async function createBooking(request, env) {
     )
   );
 
-  // Save appointment.
+  // 2. Save appointment.
 
   statements.push(
     env.DB.prepare(`
@@ -542,7 +573,7 @@ async function createBooking(request, env) {
     )
   );
 
-  // Save selected diagnostic tests.
+  // 3. Save selected diagnostic tests.
 
   for (const testId of body.test_ids) {
     statements.push(
@@ -599,9 +630,52 @@ async function createBooking(request, env) {
 }
 
 
-// ============================================================
+// ------------------------------------------------------------
+// PROTECTED STAGING TEST AUTHENTICATION
+// ------------------------------------------------------------
+
+function validTestSecret(request, env) {
+  if (
+    typeof env.BOOKING_TEST_SECRET !== "string" ||
+    env.BOOKING_TEST_SECRET.length < 32
+  ) {
+    return false;
+  }
+
+  const suppliedSecret =
+    request.headers.get("X-Booking-Test-Secret");
+
+  if (!suppliedSecret) {
+    return false;
+  }
+
+  const encoder = new TextEncoder();
+
+  const expected = encoder.encode(
+    env.BOOKING_TEST_SECRET
+  );
+
+  const supplied = encoder.encode(
+    suppliedSecret
+  );
+
+  if (expected.length !== supplied.length) {
+    return false;
+  }
+
+  let difference = 0;
+
+  for (let i = 0; i < expected.length; i++) {
+    difference |= expected[i] ^ supplied[i];
+  }
+
+  return difference === 0;
+}
+
+
+// ------------------------------------------------------------
 // MAIN WORKER
-// ============================================================
+// ------------------------------------------------------------
 
 export default {
   async fetch(request, env) {
@@ -618,8 +692,72 @@ export default {
         ok: true,
         service: "heliora-care",
         database_bound: !!env.DB,
-        bookings_enabled: env.ENABLE_BOOKINGS === "true"
+        bookings_enabled:
+          env.ENABLE_BOOKINGS === "true"
       });
+    }
+
+    // --------------------------------------------------------
+    // PROTECTED STAGING BOOKING TEST
+    // --------------------------------------------------------
+
+    if (path === "/api/internal/test-booking") {
+
+      if (request.method !== "POST") {
+        return json({
+          error: "Method not allowed"
+        }, 405, {
+          allow: "POST"
+        });
+      }
+
+      // Never allow this endpoint on the live website.
+
+      if (
+        url.hostname !==
+        "heliora-care-staging.kharetanitin.workers.dev"
+      ) {
+        return json({
+          error: "Not found"
+        }, 404);
+      }
+
+      if (
+        typeof env.BOOKING_TEST_SECRET !== "string" ||
+        env.BOOKING_TEST_SECRET.length < 32
+      ) {
+        return json({
+          error: "Testing is not configured"
+        }, 503);
+      }
+
+      if (!validTestSecret(request, env)) {
+        return json({
+          error: "Unauthorized"
+        }, 401);
+      }
+
+      // Authorized test requests reuse the normal booking
+      // validation and transactional database logic.
+
+      try {
+        return await createBooking(
+          request,
+          env,
+          true
+        );
+
+      } catch (error) {
+        console.error(
+          "Protected booking test failed",
+          error
+        );
+
+        return json({
+          error:
+            "Unable to process test booking."
+        }, 503);
+      }
     }
 
     // --------------------------------------------------------
@@ -634,7 +772,7 @@ export default {
     }
 
     // --------------------------------------------------------
-    // DIAGNOSTIC TESTS
+    // DIAGNOSTIC TEST CATALOGUE
     // --------------------------------------------------------
 
     if (
@@ -667,7 +805,10 @@ export default {
         });
 
       } catch (error) {
-        console.error("Unable to load tests", error);
+        console.error(
+          "Unable to load tests",
+          error
+        );
 
         return json({
           error: "Unable to load tests"
@@ -676,7 +817,7 @@ export default {
     }
 
     // --------------------------------------------------------
-    // AVAILABLE SLOTS
+    // AVAILABLE APPOINTMENT SLOTS
     // --------------------------------------------------------
 
     if (path === "/api/slots") {
@@ -695,7 +836,8 @@ export default {
         }, 503);
       }
 
-      const date = url.searchParams.get("date");
+      const date =
+        url.searchParams.get("date");
 
       if (!validDate(date)) {
         return json({
@@ -726,7 +868,7 @@ export default {
     }
 
     // --------------------------------------------------------
-    // BOOKING SUBMISSIONS
+    // PUBLIC BOOKING SUBMISSIONS
     // --------------------------------------------------------
 
     if (path === "/api/bookings") {
@@ -740,10 +882,17 @@ export default {
       }
 
       try {
-        return await createBooking(request, env);
+        return await createBooking(
+          request,
+          env,
+          false
+        );
 
       } catch (error) {
-        console.error("Booking request failed", error);
+        console.error(
+          "Booking request failed",
+          error
+        );
 
         return json({
           error:
