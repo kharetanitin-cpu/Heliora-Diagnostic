@@ -365,7 +365,85 @@ function generateBookingReference() {
   return `HLC-${date}-${random}`;
 }
 
+// ============================================================
+// CLOUDFLARE TURNSTILE — SERVER-SIDE VERIFICATION
+// ============================================================
 
+async function verifyTurnstile(token, request, env) {
+
+  // Check that the Turnstile secret is configured.
+  if (
+    typeof env.TURNSTILE_SECRET_KEY !== "string" ||
+    !env.TURNSTILE_SECRET_KEY
+  ) {
+    console.error("Turnstile secret is not configured");
+    return false;
+  }
+
+  // Reject missing or invalid tokens.
+  if (
+    typeof token !== "string" ||
+    token.length < 1 ||
+    token.length > 2048
+  ) {
+    return false;
+  }
+
+  try {
+    const formData = new FormData();
+
+    formData.append(
+      "secret",
+      env.TURNSTILE_SECRET_KEY
+    );
+
+    formData.append(
+      "response",
+      token
+    );
+
+    const clientIP = request.headers.get("CF-Connecting-IP");
+
+    if (clientIP) {
+      formData.append("remoteip", clientIP);
+    }
+
+    // Verify the token with Cloudflare.
+    const response = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(10000)
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Turnstile verification service unavailable");
+      return false;
+    }
+
+    const result = await response.json();
+
+    // Accept tokens issued only for our staging hostname.
+    const expectedHostname =
+      "heliora-care-staging.kharetanitin.workers.dev";
+
+    if (
+      result.success !== true ||
+      result.hostname !== expectedHostname
+    ) {
+      console.warn("Turnstile verification rejected");
+      return false;
+    }
+
+    return true;
+
+  } catch (error) {
+    console.error("Turnstile verification failed:", error);
+    return false;
+  }
+}
 // ------------------------------------------------------------
 // BOOKING SUBMISSION
 // ------------------------------------------------------------
