@@ -433,7 +433,13 @@ async function verifyTurnstile(token, request, env) {
       result.success !== true ||
       result.hostname !== expectedHostname
     ) {
-      console.warn("Turnstile verification rejected");
+      console.warn("Turnstile verification rejected", {
+  success: result.success === true,
+  error_codes: Array.isArray(result["error-codes"])
+    ? result["error-codes"]
+    : [],
+  hostname_matches: result.hostname === expectedHostname
+});
       return false;
     }
 
