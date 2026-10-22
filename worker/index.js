@@ -528,12 +528,33 @@ async function createBooking(
     }, 400);
   }
 
-  if (!validBody(body)) {
+   if (!validBody(body)) {
     return json({
       error: "Invalid booking information"
     }, 400);
   }
 
+  // ----------------------------------------------------------
+  // VERIFY CLOUDFLARE TURNSTILE FOR PUBLIC BOOKINGS
+  // ----------------------------------------------------------
+
+  if (!authorizedTest) {
+
+    const turnstileValid = await verifyTurnstile(
+      body.turnstile_token,
+      request,
+      env
+    );
+
+    if (!turnstileValid) {
+      return json({
+        error:
+          "Security verification failed. Please complete the verification and try again."
+      }, 403);
+    }
+  }
+
+  // Prevent duplicate submissions.
   // Prevent duplicate submissions.
 
   const existing = await env.DB.prepare(`
