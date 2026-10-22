@@ -15,5 +15,12 @@
   ],
   "vars": {
     "ENABLE_BOOKINGS": "false"
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true
+    }
   }
 }
