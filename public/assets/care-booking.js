@@ -743,7 +743,24 @@ el("booking").addEventListener("submit", async (event) => {
     }
 
     payload.submission_id = pendingSubmissionId;
+// ------------------------------------------------------
+// CLOUDFLARE TURNSTILE SECURITY TOKEN
+// ------------------------------------------------------
 
+const turnstileToken = document.querySelector(
+  'input[name="cf-turnstile-response"]'
+)?.value;
+
+if (!turnstileToken) {
+  showBookingNotice(
+    "Security verification required",
+    "Please complete the security verification before submitting your appointment."
+  );
+
+  return;
+}
+
+payload.turnstile_token = turnstileToken;
     button.textContent = "Submitting appointment...";
 
     const response = await fetch("/api/bookings", {
