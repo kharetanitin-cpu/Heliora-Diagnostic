@@ -858,7 +858,53 @@ export default {
         }, 503);
       }
     }
+// --------------------------------------------------------
+// TURNSTILE VERIFICATION TEST — STAGING ONLY
+// --------------------------------------------------------
 
+if (
+  path === "/api/internal/test-turnstile" &&
+  request.method === "POST"
+) {
+  const expectedHost =
+    "heliora-care-staging.kharetanitin.workers.dev";
+
+  const currentHost = new URL(request.url).hostname;
+
+  if (currentHost !== expectedHost) {
+    return json({ error: "Not available" }, 404);
+  }
+
+  if (env.ENABLE_BOOKINGS !== "false") {
+    return json({ error: "Test endpoint disabled" }, 403);
+  }
+// Allow only authorized staging test requests.
+if (!validTestSecret(request, env)) {
+  return json({
+    error: "Unauthorized"
+  }, 401);
+}
+  try {
+    const body = await request.json();
+
+    const result = await verifyTurnstile(
+      body.turnstile_token,
+      request,
+      env
+    );
+
+    return json({
+      success: result === true,
+      verification_passed: result === true
+    }, result === true ? 200 : 403);
+
+  } catch (error) {
+    return json({
+      success: false,
+      error: "Verification failed"
+    }, 400);
+  }
+}
     // --------------------------------------------------------
     // ADMIN API — DISABLED
     // --------------------------------------------------------
