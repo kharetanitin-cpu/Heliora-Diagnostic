@@ -17,7 +17,7 @@
 // ------------------------------------------------------------
 // RESPONSE HELPERS
 // ------------------------------------------------------------
-
+import { jwtVerify, createRemoteJWKSet } from "jose";
 function json(data, status = 200, extra = {}) {
   return new Response(JSON.stringify(data), {
     status,
