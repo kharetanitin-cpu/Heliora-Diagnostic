@@ -13,7 +13,63 @@
 //
 // ============================================================
 
+// ============================================================
+// CLOUDFLARE ACCESS — JWT AUTHENTICATION
+// ============================================================
 
+async function verifyAdminJWT(request, env) {
+  try {
+    const token = request.headers.get("Cf-Access-Jwt-Assertion");
+    if (!token) return null;
+
+    const teamDomain = env.CF_ACCESS_TEAM_DOMAIN;
+    const audience = env.CF_ACCESS_AUD;
+    if (!teamDomain || !audience) {
+      console.error("Cloudflare Access configuration missing");
+      return null;
+    }
+
+    const issuer = `https://${teamDomain}`;
+    const JWKS = createRemoteJWKSet(new URL(`${issuer}/cdn-cgi/access/certs`));
+    const { payload } = await jwtVerify(token, JWKS, {
+      issuer,
+      audience,
+      algorithms: ["RS256"]
+    });
+
+    if (typeof payload.email !== "string" || !payload.email) return null;
+    return { email: payload.email.toLowerCase() };
+  } catch (error) {
+    console.error("Admin JWT verification failed:", error.message);
+    return null;
+  }
+}
+
+// ============================================================
+// HELIORA CARE — STAFF AUTHORIZATION
+// ============================================================
+
+async function verifyAdminAccess(request, env) {
+  try {
+    const identity = await verifyAdminJWT(request, env);
+    if (!identity || !env.DB) return null;
+
+    const staff = await env.DB.prepare(`
+      SELECT id, email, role, active
+      FROM staff_users
+      WHERE lower(email) = ?
+      LIMIT 1
+    `).bind(identity.email).first();
+
+    if (!staff || Number(staff.active) !== 1) return null;
+    if (!["super_admin", "staff"].includes(staff.role)) return null;
+
+    return { id: staff.id, email: staff.email, role: staff.role };
+  } catch (error) {
+    console.error("Staff authorization failed:", error.message);
+    return null;
+  }
+}
 // ------------------------------------------------------------
 // RESPONSE HELPERS
 // ------------------------------------------------------------
@@ -914,7 +970,42 @@ if (!validTestSecret(request, env)) {
     // --------------------------------------------------------
     // ADMIN API — DISABLED
     // --------------------------------------------------------
+// --------------------------------------------------------
+// ADMIN AUTHENTICATION TEST — STAGING ONLY
+// --------------------------------------------------------
 
+if (path === "/api/admin/me") {
+
+  // Never expose this endpoint on the live website.
+  if (
+    url.hostname !==
+    "heliora-care-staging.kharetanitin.workers.dev"
+  ) {
+    return json({ error: "Not found" }, 404);
+  }
+
+  // Allow only GET requests.
+  if (request.method !== "GET") {
+    return json({ error: "Method not allowed" }, 405, {
+      allow: "GET"
+    });
+  }
+
+  // Verify Cloudflare Access JWT and staff authorization.
+  const admin = await verifyAdminAccess(request, env);
+
+  if (!admin) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  // Return only non-sensitive account information.
+  return json({
+    success: true,
+    authenticated: true,
+    email: admin.email,
+    role: admin.role
+  });
+}
     if (path.startsWith("/api/admin/")) {
       return json({
         error:
