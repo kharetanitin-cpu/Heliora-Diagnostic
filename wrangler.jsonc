@@ -14,7 +14,8 @@
     }
   ],
   "vars": {
-    "ENABLE_BOOKINGS": "false"
+    "ENABLE_BOOKINGS": "false",
+    "CF_ACCESS_TEAM_DOMAIN": "delicate-bar-dd86.cloudflareaccess.com"
   },
   "observability": {
     "logs": {
