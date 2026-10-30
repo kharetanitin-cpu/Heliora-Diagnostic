@@ -981,7 +981,173 @@ if (!validTestSecret(request, env)) {
 // ADMIN DASHBOARD — APPOINTMENT LISTING
 // STAGING ONLY — READ-ONLY
 // ============================================================
+// ============================================================
+// ADMIN — APPOINTMENT APPROVAL / REJECTION
+// STAGING ONLY — SUPER ADMIN
+// ============================================================
 
+if (path === "/api/admin/appointments/status") {
+
+  // Staging environment only.
+  if (
+    url.hostname !==
+    "heliora-care-staging.kharetanitin.workers.dev"
+  ) {
+    return json({ error: "Not found" }, 404);
+  }
+
+  // Only POST requests are allowed.
+  if (request.method !== "POST") {
+    return json(
+      { error: "Method not allowed" },
+      405,
+      { allow: "POST" }
+    );
+  }
+
+  // Verify Cloudflare Access and staff authorization.
+  const admin = await verifyAdminAccess(request, env);
+
+  if (!admin) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  if (admin.role !== "super_admin") {
+    return json({ error: "Forbidden" }, 403);
+  }
+
+  // Require JSON.
+  const contentType =
+    request.headers.get("content-type") || "";
+
+  if (
+    !contentType.toLowerCase().startsWith(
+      "application/json"
+    )
+  ) {
+    return json(
+      { error: "Content-Type must be application/json" },
+      415
+    );
+  }
+
+  // Require a same-origin request.
+  const origin = request.headers.get("Origin");
+
+  if (origin !== url.origin) {
+    return json({ error: "Origin not permitted" }, 403);
+  }
+
+  let body;
+
+  try {
+    const raw = await request.text();
+
+    if (new TextEncoder().encode(raw).length > 4096) {
+      return json({ error: "Request too large" }, 413);
+    }
+
+    body = JSON.parse(raw);
+
+  } catch {
+    return json({ error: "Invalid JSON" }, 400);
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body)
+  ) {
+    return json({ error: "Invalid request" }, 400);
+  }
+
+  const appointmentId = body.appointment_id;
+  const newStatus = body.status;
+
+  if (
+    !Number.isSafeInteger(appointmentId) ||
+    appointmentId < 1
+  ) {
+    return json({ error: "Invalid appointment ID" }, 400);
+  }
+
+  if (
+    newStatus !== "Confirmed" &&
+    newStatus !== "Rejected"
+  ) {
+    return json({ error: "Invalid appointment status" }, 400);
+  }
+
+  try {
+
+    // Verify that the appointment exists.
+    const appointment = await env.DB.prepare(`
+      SELECT id, status
+      FROM appointments
+      WHERE id = ?
+      LIMIT 1
+    `).bind(appointmentId).first();
+
+    if (!appointment) {
+      return json({ error: "Appointment not found" }, 404);
+    }
+
+    if (
+      String(appointment.status).toLowerCase() !== "pending"
+    ) {
+      return json({
+        error: "Only pending appointments can be updated"
+      }, 409);
+    }
+
+ 
+
+// Update appointment status and record the authenticated administrator.
+// Database triggers handle audit logging and slot release atomically.
+
+const result = await env.DB.prepare(`
+  UPDATE appointments
+  SET
+    status = ?,
+    status_updated_by = ?
+  WHERE id = ?
+    AND LOWER(status) = 'pending'
+  RETURNING id, status
+`).bind(
+  newStatus,
+  admin.email,
+  appointmentId
+).first();
+
+if (!result) {
+  return json({
+    error: "Appointment was already updated"
+  }, 409);
+}
+
+return json({
+  success: true,
+  appointment_id: result.id,
+  status: result.status,
+  message: "Appointment status updated successfully"
+});
+
+
+   
+
+  } catch (error) {
+
+    console.error(
+      "Appointment status update failed:",
+      error.message
+    );
+
+    return json({
+      error: "Unable to update appointment status"
+    }, 503);
+
+  }
+}
 if (path === "/api/admin/appointments") {
 
   // Restrict access to staging.
