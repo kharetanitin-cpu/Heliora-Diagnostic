@@ -463,6 +463,14 @@ body {
   color: var(--muted);
 }
 
+/* APPOINTMENT ACTIONS */
+.action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.button-approve { background: var(--green); }
+.button-approve:hover { background: #147d60; }
+.button-reject { background: #c94b4b; }
+.button-reject:hover { background: #a93434; }
+.action-buttons .button { padding: 8px 12px; }
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
@@ -689,9 +697,7 @@ body {
               </span>
 
               <div class="notice">
-                Appointment statistics and appointment listings
-                are read-only. Approval and rejection actions
-                are not yet enabled.
+                Appointment approval and rejection are available to Super Administrators on the Appointments page in staging.
               </div>
 
             </div>
@@ -711,7 +717,7 @@ body {
             <div>
               <h3>Appointment Management</h3>
               <p>
-                View and search diagnostic appointments.
+                View, search, approve, and reject diagnostic appointments.
               </p>
             </div>
 
@@ -782,6 +788,7 @@ body {
                   <th>Diagnostic Tests</th>
                   <th>Status</th>
                   <th>Booked On</th>
+                  <th>Actions</th>
                 </tr>
 
               </thead>
@@ -789,7 +796,7 @@ body {
               <tbody id="appointmentTableBody">
 
                 <tr>
-                  <td colspan="8" class="empty-state">
+                  <td colspan="9" class="empty-state">
                     Appointments have not been loaded.
                   </td>
                 </tr>
@@ -831,10 +838,7 @@ body {
           </div>
 
           <div class="notice">
-            This is a read-only appointment listing.
-            Approval and rejection controls will be
-            introduced after authorization and audit
-            logging are implemented.
+            Approval and rejection are available only to authorized Super Administrators. Actions are recorded in the audit log.
           </div>
 
         </section>
@@ -946,6 +950,7 @@ let appointmentsLoaded = false;
 let appointmentRequestId = 0;
 let appointmentLoading = false;
 let searchTimer = null;
+let statusUpdateInProgress = false;
 
 /* ============================================================
    NAVIGATION
@@ -1228,6 +1233,73 @@ function createStatusCell(row, statusValue) {
 
 }
 
+async function changeAppointmentStatus(appointment, status) {
+  if (!authenticated || currentAdmin?.role !== "super_admin" || statusUpdateInProgress) return;
+  if (String(appointment.status).toLowerCase() !== "pending") return;
+  const id = Number(appointment.id);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    document.getElementById("appointmentMessage").textContent = "Invalid appointment ID.";
+    return;
+  }
+  const verb = status === "Confirmed" ? "approve" : "reject";
+  if (!window.confirm(`Are you sure you want to ${verb} appointment ${appointment.booking_reference || id}?`)) return;
+
+  statusUpdateInProgress = true;
+  const message = document.getElementById("appointmentMessage");
+  message.textContent = `Updating appointment ${appointment.booking_reference || id}...`;
+  document.querySelectorAll(".appointment-action").forEach(button => button.disabled = true);
+
+  try {
+    const response = await fetch("/api/admin/appointments/status", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ appointment_id: id, status })
+    });
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) throw new Error("Unexpected server response.");
+    const data = await response.json();
+    if (!response.ok || data.success !== true) {
+      throw new Error(data.error || `Status update failed (${response.status}).`);
+    }
+    await Promise.all([loadAppointments(currentAppointmentPage), loadStatistics()]);
+    message.textContent = `Appointment ${appointment.booking_reference || id} ${status.toLowerCase()} successfully.`;
+  } catch (error) {
+    console.error("Appointment status update failed:", error);
+    message.textContent = error.message || "Unable to update appointment.";
+    await loadAppointments(currentAppointmentPage);
+    message.textContent = error.message || "Unable to update appointment.";
+  } finally {
+    statusUpdateInProgress = false;
+    document.querySelectorAll(".appointment-action").forEach(button => button.disabled = false);
+  }
+}
+
+function createActionsCell(row, appointment) {
+  const cell = document.createElement("td");
+  if (String(appointment.status || "").toLowerCase() === "pending" && currentAdmin?.role === "super_admin") {
+    const wrapper = document.createElement("div");
+    wrapper.className = "action-buttons";
+    for (const [label, status, css] of [
+      ["Approve", "Confirmed", "button-approve"],
+      ["Reject", "Rejected", "button-reject"]
+    ]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `button appointment-action ${css}`;
+      button.textContent = label;
+      button.disabled = statusUpdateInProgress;
+      button.addEventListener("click", () => changeAppointmentStatus(appointment, status));
+      wrapper.appendChild(button);
+    }
+    cell.appendChild(wrapper);
+  } else {
+    cell.textContent = "—";
+  }
+  row.appendChild(cell);
+}
+
 function showEmptyAppointments(message) {
 
   const tbody = document.getElementById(
@@ -1240,7 +1312,7 @@ function showEmptyAppointments(message) {
 
   const cell = document.createElement("td");
 
-  cell.colSpan = 8;
+  cell.colSpan = 9;
   cell.className = "empty-state";
   cell.textContent = message;
 
@@ -1293,6 +1365,8 @@ function renderAppointments(appointments) {
     createStatusCell(row, appointment.status);
 
     createCell(row, appointment.created_at);
+
+    createActionsCell(row, appointment);
 
     tbody.appendChild(row);
 
