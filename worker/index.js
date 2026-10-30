@@ -973,7 +973,69 @@ if (!validTestSecret(request, env)) {
 // --------------------------------------------------------
 // ADMIN AUTHENTICATION TEST — STAGING ONLY
 // --------------------------------------------------------
+// ============================================================
+// ADMIN DASHBOARD — APPOINTMENT STATISTICS
+// STAGING ONLY — READ-ONLY
+// ============================================================
 
+if (path === "/api/admin/stats") {
+
+  // Restrict this endpoint to the staging environment.
+  if (
+    url.hostname !==
+    "heliora-care-staging.kharetanitin.workers.dev"
+  ) {
+    return json({ error: "Not found" }, 404);
+  }
+
+  // Only GET requests are permitted.
+  if (request.method !== "GET") {
+    return json({ error: "Method not allowed" }, 405, {
+      allow: "GET"
+    });
+  }
+
+  // Verify Cloudflare Access and the active staff account.
+  const admin = await verifyAdminAccess(request, env);
+
+  if (!admin) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  // Only the Super Admin can access statistics for now.
+  if (admin.role !== "super_admin") {
+    return json({ error: "Forbidden" }, 403);
+  }
+
+  try {
+    const result = await env.DB.prepare(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN LOWER(status) = 'pending'
+            THEN 1 ELSE 0 END) AS pending,
+        SUM(CASE WHEN LOWER(status) IN ('confirmed', 'approved')
+            THEN 1 ELSE 0 END) AS confirmed,
+        SUM(CASE WHEN LOWER(status) = 'rejected'
+            THEN 1 ELSE 0 END) AS rejected
+      FROM appointments
+    `).first();
+
+    return json({
+      success: true,
+      total: Number(result?.total ?? 0),
+      pending: Number(result?.pending ?? 0),
+      confirmed: Number(result?.confirmed ?? 0),
+      rejected: Number(result?.rejected ?? 0)
+    });
+
+  } catch (error) {
+    console.error("Admin statistics error:", error.message);
+
+    return json({
+      error: "Unable to retrieve appointment statistics"
+    }, 503);
+  }
+}
 if (path === "/api/admin/me") {
 
   // Never expose this endpoint on the live website.
