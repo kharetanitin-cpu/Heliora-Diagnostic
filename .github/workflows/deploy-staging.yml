@@ -32,4 +32,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           wranglerVersion: "4"
           workingDirectory: .
-          command: deploy --config wrangler.jsonc
+         command: deploy --config wrangler.jsonc --keep-vars
