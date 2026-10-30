@@ -1,304 +1,361 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Heliora Care | Admin Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root {
-      --blue: #1264a3;
-      --dark-blue: #123b60;
-      --green: #1d9c77;
-      --background: #f4f8fb;
-      --white: #ffffff;
-      --text: #263747;
-      --muted: #718096;
-      --border: #e4ebf1;
-    }
+<title>Heliora Care | Admin Dashboard</title>
 
-    * {
-      box-sizing: border-box;
-    }
+<style>
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--background);
-      color: var(--text);
-    }
+:root {
+  --blue: #1264a3;
+  --dark-blue: #123b60;
+  --green: #1d9c77;
+  --background: #f4f8fb;
+  --white: #ffffff;
+  --text: #263747;
+  --muted: #718096;
+  --border: #e4ebf1;
+}
 
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
+* {
+  box-sizing: border-box;
+}
 
-    /* SIDEBAR */
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  color: var(--text);
+}
 
-    .sidebar {
-      width: 255px;
-      background: var(--dark-blue);
-      color: white;
-      padding: 28px 18px;
-      flex-shrink: 0;
-    }
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
 
-    .brand {
-      font-size: 23px;
-      font-weight: bold;
-      margin-bottom: 8px;
-      padding-left: 12px;
-    }
+/* SIDEBAR */
 
-    .brand span {
-      color: #4dd6a5;
-    }
+.sidebar {
+  width: 255px;
+  background: var(--dark-blue);
+  color: white;
+  padding: 28px 18px;
+  flex-shrink: 0;
+}
 
-    .subtitle {
-      font-size: 12px;
-      opacity: 0.7;
-      padding-left: 12px;
-      margin-bottom: 40px;
-    }
+.brand {
+  font-size: 23px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  padding-left: 12px;
+}
 
-    .nav-item {
-      display: block;
-      width: 100%;
-      padding: 14px 16px;
-      margin-bottom: 8px;
-      border: none;
-      border-radius: 9px;
-      background: transparent;
-      color: #e3edf5;
-      text-align: left;
-      font-size: 14px;
-      cursor: pointer;
-    }
+.brand span {
+  color: #4dd6a5;
+}
 
-    .nav-item:hover,
-    .nav-item.active {
-      background: var(--blue);
-      color: white;
-    }
+.subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+  padding-left: 12px;
+  margin-bottom: 40px;
+}
 
-    /* MAIN */
+.nav-item {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #e3edf5;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+}
 
-    .main {
-      flex: 1;
-      min-width: 0;
-    }
+.nav-item:hover,
+.nav-item.active {
+  background: var(--blue);
+  color: white;
+}
 
-    .topbar {
-      background: white;
-      padding: 22px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      gap: 15px;
-    }
+/* MAIN CONTENT */
 
-    .topbar h2 {
-      margin: 0;
-      font-size: 22px;
-      color: var(--dark-blue);
-    }
+.main {
+  flex: 1;
+  min-width: 0;
+}
 
-    .user-badge {
-      background: #e8f7f1;
-      color: #147d60;
-      padding: 10px 15px;
-      border-radius: 25px;
-      font-size: 13px;
-      font-weight: bold;
-    }
+.topbar {
+  background: white;
+  padding: 22px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  gap: 15px;
+}
 
-    .content {
-      padding: 32px;
-    }
+.topbar h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--dark-blue);
+}
 
-    .welcome {
-      margin-bottom: 28px;
-    }
+.user-badge {
+  background: #e8f7f1;
+  color: #147d60;
+  padding: 10px 15px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: bold;
+}
 
-    .welcome h1 {
-      font-size: 26px;
-      color: var(--dark-blue);
-      margin-bottom: 8px;
-    }
+.content {
+  padding: 32px;
+}
 
-    .welcome p {
-      color: var(--muted);
-      font-size: 14px;
-    }
+.welcome {
+  margin-bottom: 28px;
+}
 
-    /* STATISTICS */
+.welcome h1 {
+  font-size: 26px;
+  color: var(--dark-blue);
+  margin-bottom: 8px;
+}
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
+.welcome p {
+  color: var(--muted);
+  font-size: 14px;
+}
 
-    .stat-card {
-      background: white;
-      padding: 24px;
-      border-radius: 13px;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.025);
-    }
+/* STATISTICS */
 
-    .stat-card h3 {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 0 0 15px;
-      font-weight: 500;
-    }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
 
-    .stat-card .number {
-      font-size: 30px;
-      font-weight: bold;
-      color: var(--dark-blue);
-    }
+.stat-card {
+  background: white;
+  padding: 24px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.025);
+}
 
-    .stat-card.total {
-      border-top: 4px solid var(--blue);
-    }
+.stat-card h3 {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 15px;
+  font-weight: 500;
+}
 
-    .stat-card.pending {
-      border-top: 4px solid #f5a623;
-    }
+.stat-card .number {
+  font-size: 30px;
+  font-weight: bold;
+  color: var(--dark-blue);
+}
 
-    .stat-card.confirmed {
-      border-top: 4px solid var(--green);
-    }
+.stat-card.total {
+  border-top: 4px solid var(--blue);
+}
 
-    .stat-card.rejected {
-      border-top: 4px solid #e05c5c;
-    }
+.stat-card.pending {
+  border-top: 4px solid #f5a623;
+}
 
-    /* PANEL */
+.stat-card.confirmed {
+  border-top: 4px solid var(--green);
+}
 
-    .panel {
-      background: white;
-      border-radius: 13px;
-      padding: 25px;
-      border: 1px solid var(--border);
-      margin-bottom: 25px;
-    }
+.stat-card.rejected {
+  border-top: 4px solid #e05c5c;
+}
 
-    .panel h3 {
-      color: var(--dark-blue);
-      margin-top: 0;
-      font-size: 18px;
-    }
+/* PANELS */
 
-    .panel p {
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 14px;
-    }
+.panel {
+  background: white;
+  border-radius: 13px;
+  padding: 25px;
+  border: 1px solid var(--border);
+  margin-bottom: 25px;
+}
 
-    .status {
-      display: inline-block;
-      padding: 9px 14px;
-      border-radius: 20px;
-      background: #e8f7f1;
-      color: #147d60;
-      font-size: 13px;
-      font-weight: bold;
-    }
+.panel h3 {
+  color: var(--dark-blue);
+  margin-top: 0;
+  font-size: 18px;
+}
 
-    .notice {
-      background: #fff8e8;
-      border-left: 4px solid #f5a623;
-      padding: 15px;
-      border-radius: 6px;
-      color: #805b16;
-      font-size: 13px;
-      margin-top: 18px;
-      line-height: 1.6;
-    }
+.panel p {
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 14px;
+}
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
+.status {
+  display: inline-block;
+  padding: 9px 14px;
+  border-radius: 20px;
+  background: #e8f7f1;
+  color: #147d60;
+  font-size: 13px;
+  font-weight: bold;
+}
 
-    .info-row {
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-      overflow-wrap: anywhere;
-    }
+.notice {
+  background: #fff8e8;
+  border-left: 4px solid #f5a623;
+  padding: 15px;
+  border-radius: 6px;
+  color: #805b16;
+  font-size: 13px;
+  margin-top: 18px;
+  line-height: 1.6;
+}
 
-    .info-row strong {
-      color: var(--dark-blue);
-    }
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
 
-    .error {
-      color: #c0392b;
-      background: #fff0ee;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 14px;
-    }
+.info-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
 
-    .hidden {
-      display: none;
-    }
+.info-row strong {
+  color: var(--dark-blue);
+}
 
-    /* RESPONSIVE */
+.error {
+  color: #c0392b;
+  background: #fff0ee;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
 
-    @media (max-width: 1100px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
+.hidden {
+  display: none;
+}
 
-    @media (max-width: 750px) {
-      .layout {
-        flex-direction: column;
-      }
+/* REFRESH BUTTON */
 
-      .sidebar {
-        width: 100%;
-        padding: 20px;
-      }
+.refresh-button {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
 
-      .subtitle {
-        margin-bottom: 20px;
-      }
+.refresh-button:hover {
+  background: var(--dark-blue);
+}
 
-      .nav {
-        display: flex;
-        gap: 8px;
-        overflow-x: auto;
-      }
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
 
-      .nav-item {
-        white-space: nowrap;
-      }
+.stats-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 15px;
+}
 
-      .topbar {
-        padding: 18px;
-        flex-direction: column;
-        align-items: flex-start;
-      }
+.stats-toolbar h3 {
+  margin: 0;
+  color: var(--dark-blue);
+  font-size: 17px;
+}
 
-      .content {
-        padding: 18px;
-      }
+.stats-message {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
 
-      .stats,
-      .info-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media (max-width: 750px) {
+
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .subtitle {
+    margin-bottom: 20px;
+  }
+
+  .nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+  }
+
+  .topbar {
+    padding: 18px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .content {
+    padding: 18px;
+  }
+
+  .stats,
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+}
+
+</style>
+
 </head>
 
 <body>
@@ -318,25 +375,37 @@
     </div>
 
     <nav class="nav" aria-label="Admin navigation">
-      <button class="nav-item active" data-page="overview">
+
+      <button
+        class="nav-item active"
+        data-page="overview">
         Dashboard Overview
       </button>
 
-      <button class="nav-item" data-page="appointments">
+      <button
+        class="nav-item"
+        data-page="appointments">
         Appointments
       </button>
 
-      <button class="nav-item" data-page="patients">
+      <button
+        class="nav-item"
+        data-page="patients">
         Patient Records
       </button>
 
-      <button class="nav-item" data-page="staff">
+      <button
+        class="nav-item"
+        data-page="staff">
         Staff Management
       </button>
 
-      <button class="nav-item" data-page="settings">
+      <button
+        class="nav-item"
+        data-page="settings">
         Settings
       </button>
+
     </nav>
 
   </aside>
@@ -351,7 +420,9 @@
         Dashboard Overview
       </h2>
 
-      <div class="user-badge" id="userBadge">
+      <div
+        class="user-badge"
+        id="userBadge">
         Verifying administrator...
       </div>
 
@@ -361,75 +432,174 @@
 
       <!-- AUTHENTICATION ERROR -->
 
-      <div id="authError" class="error hidden" role="alert"></div>
+      <div
+        id="authError"
+        class="error hidden"
+        role="alert">
+      </div>
 
       <!-- DASHBOARD -->
 
-      <div id="dashboardContent" class="hidden">
+      <div
+        id="dashboardContent"
+        class="hidden">
+
+        <!-- OVERVIEW -->
 
         <section id="overviewPage">
 
           <div class="welcome">
-            <h1>Welcome to Heliora Care</h1>
+
+            <h1>
+              Welcome to Heliora Care
+            </h1>
+
             <p>
-              Manage your diagnostic centre securely from one place.
+              Manage your diagnostic centre securely
+              from one place.
             </p>
+
           </div>
+
+          <!-- STATISTICS HEADER -->
+
+          <div class="stats-toolbar">
+
+            <h3>
+              Appointment Overview
+            </h3>
+
+            <button
+              class="refresh-button"
+              id="refreshStats"
+              type="button">
+              Refresh Statistics
+            </button>
+
+          </div>
+
+          <!-- LIVE STATISTICS -->
 
           <div class="stats">
 
             <div class="stat-card total">
-              <h3>Total Appointments</h3>
-              <div class="number">—</div>
+
+              <h3>
+                Total Appointments
+              </h3>
+
+              <div
+                class="number"
+                id="totalAppointments">
+                —
+              </div>
+
             </div>
 
             <div class="stat-card pending">
-              <h3>Pending Approval</h3>
-              <div class="number">—</div>
+
+              <h3>
+                Pending Approval
+              </h3>
+
+              <div
+                class="number"
+                id="pendingAppointments">
+                —
+              </div>
+
             </div>
 
             <div class="stat-card confirmed">
-              <h3>Confirmed Appointments</h3>
-              <div class="number">—</div>
+
+              <h3>
+                Confirmed Appointments
+              </h3>
+
+              <div
+                class="number"
+                id="confirmedAppointments">
+                —
+              </div>
+
             </div>
 
             <div class="stat-card rejected">
-              <h3>Rejected Appointments</h3>
-              <div class="number">—</div>
+
+              <h3>
+                Rejected Appointments
+              </h3>
+
+              <div
+                class="number"
+                id="rejectedAppointments">
+                —
+              </div>
+
             </div>
 
           </div>
+
+          <div
+            id="statsMessage"
+            class="stats-message"
+            role="status"
+            aria-live="polite">
+            Waiting for appointment statistics...
+          </div>
+
+          <!-- INFORMATION -->
 
           <div class="info-grid">
 
             <div class="panel">
 
-              <h3>Administrator Information</h3>
+              <h3>
+                Administrator Information
+              </h3>
 
               <div class="info-row">
+
                 <strong>Email:</strong>
-                <span id="adminEmail">Loading...</span>
+
+                <span id="adminEmail">
+                  Loading...
+                </span>
+
               </div>
 
               <div class="info-row">
+
                 <strong>Role:</strong>
-                <span id="adminRole">Loading...</span>
+
+                <span id="adminRole">
+                  Loading...
+                </span>
+
               </div>
 
               <div class="info-row">
+
                 <strong>Authentication:</strong>
-                <span class="status">Cloudflare Access</span>
+
+                <span class="status">
+                  Cloudflare Access
+                </span>
+
               </div>
 
             </div>
 
             <div class="panel">
 
-              <h3>System Status</h3>
+              <h3>
+                System Status
+              </h3>
 
               <p>
-                Administrator authentication is connected to
-                Cloudflare Access and the Heliora Care staff database.
+                Administrator authentication is connected
+                to Cloudflare Access and the Heliora Care
+                staff database.
               </p>
 
               <span class="status">
@@ -437,9 +607,9 @@
               </span>
 
               <div class="notice">
-                Appointment management is not yet enabled.
-                Dashboard statistics will appear after the
-                protected appointment API is connected.
+                Appointment statistics are read-only.
+                Appointment approval and rejection
+                are not yet enabled.
               </div>
 
             </div>
@@ -450,85 +620,112 @@
 
         <!-- APPOINTMENTS -->
 
-        <section id="appointmentsPage" class="panel hidden">
+        <section
+          id="appointmentsPage"
+          class="panel hidden">
 
-          <h3>Appointment Management</h3>
+          <h3>
+            Appointment Management
+          </h3>
 
           <p>
-            View, search, approve, and reject appointments.
+            View, search, approve, and reject
+            appointments.
           </p>
 
           <div class="notice">
             This module is under development.
-            Appointment records are not being retrieved yet.
+            Individual appointment records are
+            not being retrieved yet.
           </div>
 
         </section>
 
         <!-- PATIENTS -->
 
-        <section id="patientsPage" class="panel hidden">
+        <section
+          id="patientsPage"
+          class="panel hidden">
 
-          <h3>Patient Records</h3>
+          <h3>
+            Patient Records
+          </h3>
 
           <p>
-            Search patient appointment history and diagnostic bookings.
+            Search patient appointment history
+            and diagnostic bookings.
           </p>
 
           <div class="notice">
-            Patient record access will be enabled after
-            the secure backend permissions are implemented.
+            Patient record access will be enabled
+            after secure backend permissions
+            are implemented.
           </div>
 
         </section>
 
         <!-- STAFF -->
 
-        <section id="staffPage" class="panel hidden">
+        <section
+          id="staffPage"
+          class="panel hidden">
 
-          <h3>Staff Management</h3>
+          <h3>
+            Staff Management
+          </h3>
 
           <p>
-            Manage authorized Heliora Care staff accounts.
+            Manage authorized Heliora Care
+            staff accounts.
           </p>
 
           <div class="notice">
-            Staff account management will be available
-            only to authorized administrators.
+            Staff account management will be
+            available only to authorized
+            administrators.
           </div>
 
         </section>
 
         <!-- SETTINGS -->
 
-        <section id="settingsPage" class="panel hidden">
+        <section
+          id="settingsPage"
+          class="panel hidden">
 
-          <h3>Booking Settings</h3>
+          <h3>
+            Booking Settings
+          </h3>
 
           <div class="info-row">
-            <strong>Opening Time:</strong> 08:00 AM
+            <strong>Opening Time:</strong>
+            08:00 AM
           </div>
 
           <div class="info-row">
-            <strong>Closing Time:</strong> 06:00 PM
+            <strong>Closing Time:</strong>
+            06:00 PM
           </div>
 
           <div class="info-row">
-            <strong>Slot Duration:</strong> 30 minutes
+            <strong>Slot Duration:</strong>
+            30 minutes
           </div>
 
           <div class="info-row">
-            <strong>Maximum Bookings Per Slot:</strong> 5
+            <strong>Maximum Bookings Per Slot:</strong>
+            5
           </div>
 
           <div class="info-row">
-            <strong>Sunday:</strong> Open
+            <strong>Sunday:</strong>
+            Open
           </div>
 
           <div class="notice">
             These are display settings only.
-            Editing will be enabled after the
-            settings API is secured.
+            Editing will be enabled after
+            the settings API is secured.
           </div>
 
         </section>
@@ -542,121 +739,409 @@
 </div>
 
 <script>
-  "use strict";
 
-  const pages = {
-    overview: "Dashboard Overview",
-    appointments: "Appointments",
-    patients: "Patient Records",
-    staff: "Staff Management",
-    settings: "Settings"
-  };
+"use strict";
 
-  let authenticated = false;
+/* ============================================================
+   HELIORA CARE — ADMIN DASHBOARD
+   STAGING ENVIRONMENT
+   ============================================================ */
 
-  function showPage(page) {
-    if (!authenticated || !pages[page]) {
-      return;
-    }
+const pages = {
+  overview: "Dashboard Overview",
+  appointments: "Appointments",
+  patients: "Patient Records",
+  staff: "Staff Management",
+  settings: "Settings"
+};
 
-    for (const name of Object.keys(pages)) {
-      const section = document.getElementById(name + "Page");
-      section.classList.toggle("hidden", name !== page);
-    }
+let authenticated = false;
+let currentAdmin = null;
 
-    document.getElementById("pageTitle").textContent = pages[page];
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
 
-    document.querySelectorAll(".nav-item").forEach(button => {
-      button.classList.toggle(
-        "active",
-        button.dataset.page === page
-      );
-    });
+function showPage(page) {
+
+  if (!authenticated || !pages[page]) {
+    return;
   }
 
-  document.querySelectorAll(".nav-item").forEach(button => {
-    button.addEventListener("click", () => {
-      showPage(button.dataset.page);
-    });
+  for (const name of Object.keys(pages)) {
+
+    const section = document.getElementById(
+      name + "Page"
+    );
+
+    section.classList.toggle(
+      "hidden",
+      name !== page
+    );
+
+  }
+
+  document.getElementById(
+    "pageTitle"
+  ).textContent = pages[page];
+
+  document.querySelectorAll(
+    ".nav-item"
+  ).forEach(button => {
+
+    button.classList.toggle(
+      "active",
+      button.dataset.page === page
+    );
+
   });
 
-  async function loadAdmin() {
-    const badge = document.getElementById("userBadge");
-    const errorBox = document.getElementById("authError");
-    const dashboard = document.getElementById("dashboardContent");
+}
 
-    try {
-      const response = await fetch("/api/admin/me", {
+document.querySelectorAll(
+  ".nav-item"
+).forEach(button => {
+
+  button.addEventListener(
+    "click",
+    () => {
+      showPage(button.dataset.page);
+    }
+  );
+
+});
+
+/* ============================================================
+   LIVE APPOINTMENT STATISTICS
+   ============================================================ */
+
+function resetStatistics() {
+
+  const ids = [
+    "totalAppointments",
+    "pendingAppointments",
+    "confirmedAppointments",
+    "rejectedAppointments"
+  ];
+
+  for (const id of ids) {
+
+    document.getElementById(
+      id
+    ).textContent = "—";
+
+  }
+
+}
+
+async function loadStatistics() {
+
+  const message = document.getElementById(
+    "statsMessage"
+  );
+
+  const refreshButton = document.getElementById(
+    "refreshStats"
+  );
+
+  if (
+    !authenticated ||
+    !currentAdmin
+  ) {
+
+    resetStatistics();
+
+    message.textContent =
+      "Administrator authentication is required.";
+
+    return;
+  }
+
+  if (
+    currentAdmin.role !== "super_admin"
+  ) {
+
+    resetStatistics();
+
+    message.textContent =
+      "Appointment statistics are available to Super Admin only.";
+
+    return;
+  }
+
+  refreshButton.disabled = true;
+
+  message.textContent =
+    "Loading appointment statistics...";
+
+  try {
+
+    const response = await fetch(
+      "/api/admin/stats",
+      {
         method: "GET",
         credentials: "same-origin",
         cache: "no-store",
         headers: {
           "Accept": "application/json"
         }
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          "Administrator authentication failed (" +
-          response.status +
-          ")."
-        );
       }
+    );
 
-      const contentType =
-        response.headers.get("content-type") || "";
+    if (!response.ok) {
 
-      if (!contentType.includes("application/json")) {
-        throw new Error(
-          "Unexpected authentication response."
-        );
-      }
+      throw new Error(
+        "Statistics request failed (" +
+        response.status +
+        ")."
+      );
 
-      const admin = await response.json();
+    }
+
+    const contentType =
+      response.headers.get(
+        "content-type"
+      ) || "";
+
+    if (
+      !contentType.includes(
+        "application/json"
+      )
+    ) {
+
+      throw new Error(
+        "Unexpected statistics response."
+      );
+
+    }
+
+    const data = await response.json();
+
+    if (
+      data.success !== true
+    ) {
+
+      throw new Error(
+        "Statistics could not be retrieved."
+      );
+
+    }
+
+    const fields = [
+      "total",
+      "pending",
+      "confirmed",
+      "rejected"
+    ];
+
+    for (const field of fields) {
 
       if (
-        admin.success !== true ||
-        admin.authenticated !== true ||
-        !["super_admin", "staff"].includes(admin.role)
+        !Number.isSafeInteger(data[field]) ||
+        data[field] < 0
       ) {
-        throw new Error("Administrator access denied.");
+
+        throw new Error(
+          "Invalid statistics response."
+        );
+
       }
 
-      authenticated = true;
-
-      document.getElementById("adminEmail").textContent =
-        admin.email;
-
-      document.getElementById("adminRole").textContent =
-        admin.role === "super_admin"
-          ? "Super Administrator"
-          : "Staff";
-
-      badge.textContent =
-        admin.role === "super_admin"
-          ? "Super Admin"
-          : "Staff";
-
-      dashboard.classList.remove("hidden");
-      errorBox.classList.add("hidden");
-
-      showPage("overview");
-
-    } catch (error) {
-      authenticated = false;
-
-      badge.textContent = "Access Not Verified";
-      dashboard.classList.add("hidden");
-
-      errorBox.textContent =
-        error.message +
-        " Please sign in through Cloudflare Access and try again.";
-
-      errorBox.classList.remove("hidden");
     }
+
+    document.getElementById(
+      "totalAppointments"
+    ).textContent = data.total;
+
+    document.getElementById(
+      "pendingAppointments"
+    ).textContent = data.pending;
+
+    document.getElementById(
+      "confirmedAppointments"
+    ).textContent = data.confirmed;
+
+    document.getElementById(
+      "rejectedAppointments"
+    ).textContent = data.rejected;
+
+    message.textContent =
+      "Live appointment statistics loaded successfully.";
+
+  } catch (error) {
+
+    console.error(
+      "Statistics loading failed:",
+      error
+    );
+
+    resetStatistics();
+
+    message.textContent =
+      "Unable to load appointment statistics. " +
+      "Please refresh and try again.";
+
+  } finally {
+
+    refreshButton.disabled = false;
+
   }
 
-  loadAdmin();
+}
+
+/* ============================================================
+   REFRESH STATISTICS BUTTON
+   ============================================================ */
+
+document.getElementById(
+  "refreshStats"
+).addEventListener(
+  "click",
+  loadStatistics
+);
+
+/* ============================================================
+   ADMIN AUTHENTICATION
+   ============================================================ */
+
+async function loadAdmin() {
+
+  const badge = document.getElementById(
+    "userBadge"
+  );
+
+  const errorBox = document.getElementById(
+    "authError"
+  );
+
+  const dashboard = document.getElementById(
+    "dashboardContent"
+  );
+
+  try {
+
+    const response = await fetch(
+      "/api/admin/me",
+      {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Accept": "application/json"
+        }
+      }
+    );
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Administrator authentication failed (" +
+        response.status +
+        ")."
+      );
+
+    }
+
+    const contentType =
+      response.headers.get(
+        "content-type"
+      ) || "";
+
+    if (
+      !contentType.includes(
+        "application/json"
+      )
+    ) {
+
+      throw new Error(
+        "Unexpected authentication response."
+      );
+
+    }
+
+    const admin = await response.json();
+
+    if (
+      admin.success !== true ||
+      admin.authenticated !== true ||
+      !["super_admin", "staff"].includes(
+        admin.role
+      )
+    ) {
+
+      throw new Error(
+        "Administrator access denied."
+      );
+
+    }
+
+    authenticated = true;
+
+    currentAdmin = admin;
+
+    document.getElementById(
+      "adminEmail"
+    ).textContent = admin.email;
+
+    document.getElementById(
+      "adminRole"
+    ).textContent =
+      admin.role === "super_admin"
+        ? "Super Administrator"
+        : "Staff";
+
+    badge.textContent =
+      admin.role === "super_admin"
+        ? "Super Admin"
+        : "Staff";
+
+    dashboard.classList.remove(
+      "hidden"
+    );
+
+    errorBox.classList.add(
+      "hidden"
+    );
+
+    showPage("overview");
+
+    /* Load statistics only after authentication */
+
+    await loadStatistics();
+
+  } catch (error) {
+
+    authenticated = false;
+
+    currentAdmin = null;
+
+    resetStatistics();
+
+    badge.textContent =
+      "Access Not Verified";
+
+    dashboard.classList.add(
+      "hidden"
+    );
+
+    errorBox.textContent =
+      error.message +
+      " Please sign in through Cloudflare Access and try again.";
+
+    errorBox.classList.remove(
+      "hidden"
+    );
+
+  }
+
+}
+
+/* ============================================================
+   INITIALIZE DASHBOARD
+   ============================================================ */
+
+loadAdmin();
+
 </script>
 
 </body>
