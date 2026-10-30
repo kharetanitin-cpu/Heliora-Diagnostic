@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -85,7 +84,7 @@ body {
   color: white;
 }
 
-/* MAIN CONTENT */
+/* MAIN */
 
 .main {
   flex: 1;
@@ -142,7 +141,7 @@ body {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
-  margin-bottom: 30px;
+  margin-bottom: 25px;
 }
 
 .stat-card {
@@ -150,7 +149,7 @@ body {
   padding: 24px;
   border-radius: 13px;
   border: 1px solid var(--border);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.025);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.025);
 }
 
 .stat-card h3 {
@@ -252,12 +251,12 @@ body {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
-/* REFRESH BUTTON */
+/* BUTTONS */
 
-.refresh-button {
+.button {
   background: var(--blue);
   color: white;
   border: none;
@@ -268,43 +267,208 @@ body {
   font-weight: bold;
 }
 
-.refresh-button:hover {
+.button:hover {
   background: var(--dark-blue);
 }
 
-.refresh-button:disabled {
-  opacity: 0.6;
-  cursor: wait;
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.stats-toolbar {
+.button-secondary {
+  background: #e9f0f6;
+  color: var(--dark-blue);
+}
+
+.button-secondary:hover {
+  background: #d9e5ef;
+}
+
+.toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   gap: 15px;
 }
 
-.stats-toolbar h3 {
+.toolbar h3 {
   margin: 0;
-  color: var(--dark-blue);
-  font-size: 17px;
 }
 
-.stats-message {
+.message {
   color: var(--muted);
   font-size: 13px;
   margin-bottom: 20px;
 }
 
+/* APPOINTMENT MANAGEMENT */
+
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.appointment-header h3 {
+  margin: 0 0 8px;
+}
+
+.appointment-header p {
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.search-input,
+.filter-select {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  color: var(--text);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 230px;
+}
+
+.filter-select {
+  min-width: 170px;
+}
+
+.search-input:focus,
+.filter-select:focus {
+  outline: 2px solid rgba(18,100,163,0.2);
+  border-color: var(--blue);
+}
+
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.appointment-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1150px;
+}
+
+.appointment-table thead {
+  background: #eef5fa;
+}
+
+.appointment-table th {
+  padding: 15px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--dark-blue);
+  white-space: nowrap;
+}
+
+.appointment-table td {
+  padding: 15px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.appointment-table tbody tr:hover {
+  background: #f8fbfd;
+}
+
+.booking-ref {
+  font-weight: bold;
+  color: var(--blue);
+}
+
+.patient-name {
+  font-weight: bold;
+  color: var(--dark-blue);
+  margin-bottom: 5px;
+}
+
+.contact-details {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.test-name {
+  line-height: 1.6;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 7px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.status-pending {
+  background: #fff3d6;
+  color: #996600;
+}
+
+.status-confirmed {
+  background: #e5f7ee;
+  color: #147d60;
+}
+
+.status-rejected {
+  background: #fdeaea;
+  color: #b63b3b;
+}
+
+.status-other {
+  background: #edf0f3;
+  color: #536170;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 35px;
+  color: var(--muted);
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 22px;
+  gap: 15px;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--muted);
+}
+
 /* RESPONSIVE */
 
 @media (max-width: 1100px) {
-
   .stats {
     grid-template-columns: repeat(2, 1fr);
   }
-
 }
 
 @media (max-width: 750px) {
@@ -347,15 +511,25 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .stats-toolbar {
+  .toolbar,
+  .appointment-header,
+  .pagination {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .filters {
+    flex-direction: column;
+  }
+
+  .search-input,
+  .filter-select {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 </style>
-
 </head>
 
 <body>
@@ -376,33 +550,23 @@ body {
 
     <nav class="nav" aria-label="Admin navigation">
 
-      <button
-        class="nav-item active"
-        data-page="overview">
+      <button class="nav-item active" data-page="overview">
         Dashboard Overview
       </button>
 
-      <button
-        class="nav-item"
-        data-page="appointments">
+      <button class="nav-item" data-page="appointments">
         Appointments
       </button>
 
-      <button
-        class="nav-item"
-        data-page="patients">
+      <button class="nav-item" data-page="patients">
         Patient Records
       </button>
 
-      <button
-        class="nav-item"
-        data-page="staff">
+      <button class="nav-item" data-page="staff">
         Staff Management
       </button>
 
-      <button
-        class="nav-item"
-        data-page="settings">
+      <button class="nav-item" data-page="settings">
         Settings
       </button>
 
@@ -410,7 +574,7 @@ body {
 
   </aside>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN -->
 
   <main class="main">
 
@@ -420,9 +584,7 @@ body {
         Dashboard Overview
       </h2>
 
-      <div
-        class="user-badge"
-        id="userBadge">
+      <div class="user-badge" id="userBadge">
         Verifying administrator...
       </div>
 
@@ -430,47 +592,27 @@ body {
 
     <div class="content">
 
-      <!-- AUTHENTICATION ERROR -->
+      <div id="authError" class="error hidden" role="alert"></div>
 
-      <div
-        id="authError"
-        class="error hidden"
-        role="alert">
-      </div>
-
-      <!-- DASHBOARD -->
-
-      <div
-        id="dashboardContent"
-        class="hidden">
+      <div id="dashboardContent" class="hidden">
 
         <!-- OVERVIEW -->
 
         <section id="overviewPage">
 
           <div class="welcome">
-
-            <h1>
-              Welcome to Heliora Care
-            </h1>
-
+            <h1>Welcome to Heliora Care</h1>
             <p>
-              Manage your diagnostic centre securely
-              from one place.
+              Manage your diagnostic centre securely from one place.
             </p>
-
           </div>
 
-          <!-- STATISTICS HEADER -->
+          <div class="toolbar">
 
-          <div class="stats-toolbar">
-
-            <h3>
-              Appointment Overview
-            </h3>
+            <h3>Appointment Overview</h3>
 
             <button
-              class="refresh-button"
+              class="button"
               id="refreshStats"
               type="button">
               Refresh Statistics
@@ -478,128 +620,68 @@ body {
 
           </div>
 
-          <!-- LIVE STATISTICS -->
-
           <div class="stats">
 
             <div class="stat-card total">
-
-              <h3>
-                Total Appointments
-              </h3>
-
-              <div
-                class="number"
-                id="totalAppointments">
-                —
-              </div>
-
+              <h3>Total Appointments</h3>
+              <div class="number" id="totalAppointments">—</div>
             </div>
 
             <div class="stat-card pending">
-
-              <h3>
-                Pending Approval
-              </h3>
-
-              <div
-                class="number"
-                id="pendingAppointments">
-                —
-              </div>
-
+              <h3>Pending Approval</h3>
+              <div class="number" id="pendingAppointments">—</div>
             </div>
 
             <div class="stat-card confirmed">
-
-              <h3>
-                Confirmed Appointments
-              </h3>
-
-              <div
-                class="number"
-                id="confirmedAppointments">
-                —
-              </div>
-
+              <h3>Confirmed Appointments</h3>
+              <div class="number" id="confirmedAppointments">—</div>
             </div>
 
             <div class="stat-card rejected">
-
-              <h3>
-                Rejected Appointments
-              </h3>
-
-              <div
-                class="number"
-                id="rejectedAppointments">
-                —
-              </div>
-
+              <h3>Rejected Appointments</h3>
+              <div class="number" id="rejectedAppointments">—</div>
             </div>
 
           </div>
 
           <div
             id="statsMessage"
-            class="stats-message"
+            class="message"
             role="status"
             aria-live="polite">
             Waiting for appointment statistics...
           </div>
 
-          <!-- INFORMATION -->
-
           <div class="info-grid">
 
             <div class="panel">
 
-              <h3>
-                Administrator Information
-              </h3>
+              <h3>Administrator Information</h3>
 
               <div class="info-row">
-
                 <strong>Email:</strong>
-
-                <span id="adminEmail">
-                  Loading...
-                </span>
-
+                <span id="adminEmail">Loading...</span>
               </div>
 
               <div class="info-row">
-
                 <strong>Role:</strong>
-
-                <span id="adminRole">
-                  Loading...
-                </span>
-
+                <span id="adminRole">Loading...</span>
               </div>
 
               <div class="info-row">
-
                 <strong>Authentication:</strong>
-
-                <span class="status">
-                  Cloudflare Access
-                </span>
-
+                <span class="status">Cloudflare Access</span>
               </div>
 
             </div>
 
             <div class="panel">
 
-              <h3>
-                System Status
-              </h3>
+              <h3>System Status</h3>
 
               <p>
-                Administrator authentication is connected
-                to Cloudflare Access and the Heliora Care
-                staff database.
+                Administrator authentication is connected to
+                Cloudflare Access and the Heliora Care staff database.
               </p>
 
               <span class="status">
@@ -607,8 +689,8 @@ body {
               </span>
 
               <div class="notice">
-                Appointment statistics are read-only.
-                Appointment approval and rejection
+                Appointment statistics and appointment listings
+                are read-only. Approval and rejection actions
                 are not yet enabled.
               </div>
 
@@ -624,19 +706,135 @@ body {
           id="appointmentsPage"
           class="panel hidden">
 
-          <h3>
-            Appointment Management
-          </h3>
+          <div class="appointment-header">
 
-          <p>
-            View, search, approve, and reject
-            appointments.
-          </p>
+            <div>
+              <h3>Appointment Management</h3>
+              <p>
+                View and search diagnostic appointments.
+              </p>
+            </div>
+
+            <button
+              class="button"
+              id="refreshAppointments"
+              type="button">
+              Refresh Appointments
+            </button>
+
+          </div>
+
+          <div class="filters">
+
+            <input
+              type="search"
+              id="appointmentSearch"
+              class="search-input"
+              placeholder="Search patient name or booking reference"
+              aria-label="Search appointments"
+              maxlength="100">
+
+            <select
+              id="appointmentStatus"
+              class="filter-select"
+              aria-label="Filter appointment status">
+
+              <option value="">
+                All Statuses
+              </option>
+
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="confirmed">
+                Confirmed
+              </option>
+
+              <option value="rejected">
+                Rejected
+              </option>
+
+            </select>
+
+          </div>
+
+          <div
+            id="appointmentMessage"
+            class="message"
+            role="status"
+            aria-live="polite">
+            Select Appointments to load records.
+          </div>
+
+          <div class="table-container">
+
+            <table class="appointment-table">
+
+              <thead>
+
+                <tr>
+                  <th>Booking Reference</th>
+                  <th>Patient Details</th>
+                  <th>Appointment Date</th>
+                  <th>Time</th>
+                  <th>Appointment Type</th>
+                  <th>Diagnostic Tests</th>
+                  <th>Status</th>
+                  <th>Booked On</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="appointmentTableBody">
+
+                <tr>
+                  <td colspan="8" class="empty-state">
+                    Appointments have not been loaded.
+                  </td>
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <div class="pagination">
+
+            <div
+              id="paginationInfo"
+              class="pagination-info">
+              Page 1
+            </div>
+
+            <div class="pagination-controls">
+
+              <button
+                class="button button-secondary"
+                id="previousPage"
+                type="button"
+                disabled>
+                Previous
+              </button>
+
+              <button
+                class="button"
+                id="nextPage"
+                type="button"
+                disabled>
+                Next
+              </button>
+
+            </div>
+
+          </div>
 
           <div class="notice">
-            This module is under development.
-            Individual appointment records are
-            not being retrieved yet.
+            This is a read-only appointment listing.
+            Approval and rejection controls will be
+            introduced after authorization and audit
+            logging are implemented.
           </div>
 
         </section>
@@ -647,19 +845,15 @@ body {
           id="patientsPage"
           class="panel hidden">
 
-          <h3>
-            Patient Records
-          </h3>
+          <h3>Patient Records</h3>
 
           <p>
-            Search patient appointment history
-            and diagnostic bookings.
+            Search patient appointment history and
+            diagnostic bookings.
           </p>
 
           <div class="notice">
-            Patient record access will be enabled
-            after secure backend permissions
-            are implemented.
+            Patient record management is under development.
           </div>
 
         </section>
@@ -670,19 +864,15 @@ body {
           id="staffPage"
           class="panel hidden">
 
-          <h3>
-            Staff Management
-          </h3>
+          <h3>Staff Management</h3>
 
           <p>
-            Manage authorized Heliora Care
-            staff accounts.
+            Manage authorized Heliora Care staff accounts.
           </p>
 
           <div class="notice">
-            Staff account management will be
-            available only to authorized
-            administrators.
+            Staff management will be available after
+            the required authorization controls are implemented.
           </div>
 
         </section>
@@ -693,39 +883,31 @@ body {
           id="settingsPage"
           class="panel hidden">
 
-          <h3>
-            Booking Settings
-          </h3>
+          <h3>Booking Settings</h3>
 
           <div class="info-row">
-            <strong>Opening Time:</strong>
-            08:00 AM
+            <strong>Opening Time:</strong> 08:00 AM
           </div>
 
           <div class="info-row">
-            <strong>Closing Time:</strong>
-            06:00 PM
+            <strong>Closing Time:</strong> 06:00 PM
           </div>
 
           <div class="info-row">
-            <strong>Slot Duration:</strong>
-            30 minutes
+            <strong>Slot Duration:</strong> 30 minutes
           </div>
 
           <div class="info-row">
-            <strong>Maximum Bookings Per Slot:</strong>
-            5
+            <strong>Maximum Bookings Per Slot:</strong> 5
           </div>
 
           <div class="info-row">
-            <strong>Sunday:</strong>
-            Open
+            <strong>Sunday:</strong> Open
           </div>
 
           <div class="notice">
             These are display settings only.
-            Editing will be enabled after
-            the settings API is secured.
+            Editing is not yet enabled.
           </div>
 
         </section>
@@ -743,8 +925,7 @@ body {
 "use strict";
 
 /* ============================================================
-   HELIORA CARE — ADMIN DASHBOARD
-   STAGING ENVIRONMENT
+   ADMIN DASHBOARD CONFIGURATION
    ============================================================ */
 
 const pages = {
@@ -758,6 +939,14 @@ const pages = {
 let authenticated = false;
 let currentAdmin = null;
 
+let currentAppointmentPage = 1;
+let appointmentCount = 0;
+let appointmentLimit = 20;
+let appointmentsLoaded = false;
+let appointmentRequestId = 0;
+let appointmentLoading = false;
+let searchTimer = null;
+
 /* ============================================================
    NAVIGATION
    ============================================================ */
@@ -770,9 +959,7 @@ function showPage(page) {
 
   for (const name of Object.keys(pages)) {
 
-    const section = document.getElementById(
-      name + "Page"
-    );
+    const section = document.getElementById(name + "Page");
 
     section.classList.toggle(
       "hidden",
@@ -781,13 +968,10 @@ function showPage(page) {
 
   }
 
-  document.getElementById(
-    "pageTitle"
-  ).textContent = pages[page];
+  document.getElementById("pageTitle").textContent =
+    pages[page];
 
-  document.querySelectorAll(
-    ".nav-item"
-  ).forEach(button => {
+  document.querySelectorAll(".nav-item").forEach(button => {
 
     button.classList.toggle(
       "active",
@@ -796,23 +980,28 @@ function showPage(page) {
 
   });
 
+  if (page === "appointments") {
+
+    if (!appointmentsLoaded) {
+      loadAppointments(1);
+    }
+
+  }
+
 }
 
-document.querySelectorAll(
-  ".nav-item"
-).forEach(button => {
+document.querySelectorAll(".nav-item").forEach(button => {
 
-  button.addEventListener(
-    "click",
-    () => {
-      showPage(button.dataset.page);
-    }
-  );
+  button.addEventListener("click", () => {
+
+    showPage(button.dataset.page);
+
+  });
 
 });
 
 /* ============================================================
-   LIVE APPOINTMENT STATISTICS
+   APPOINTMENT STATISTICS
    ============================================================ */
 
 function resetStatistics() {
@@ -825,29 +1014,17 @@ function resetStatistics() {
   ];
 
   for (const id of ids) {
-
-    document.getElementById(
-      id
-    ).textContent = "—";
-
+    document.getElementById(id).textContent = "—";
   }
 
 }
 
 async function loadStatistics() {
 
-  const message = document.getElementById(
-    "statsMessage"
-  );
+  const message = document.getElementById("statsMessage");
+  const button = document.getElementById("refreshStats");
 
-  const refreshButton = document.getElementById(
-    "refreshStats"
-  );
-
-  if (
-    !authenticated ||
-    !currentAdmin
-  ) {
+  if (!authenticated || !currentAdmin) {
 
     resetStatistics();
 
@@ -857,36 +1034,31 @@ async function loadStatistics() {
     return;
   }
 
-  if (
-    currentAdmin.role !== "super_admin"
-  ) {
+  if (currentAdmin.role !== "super_admin") {
 
     resetStatistics();
 
     message.textContent =
-      "Appointment statistics are available to Super Admin only.";
+      "Statistics are available to Super Admin only.";
 
     return;
   }
 
-  refreshButton.disabled = true;
+  button.disabled = true;
 
   message.textContent =
     "Loading appointment statistics...";
 
   try {
 
-    const response = await fetch(
-      "/api/admin/stats",
-      {
-        method: "GET",
-        credentials: "same-origin",
-        cache: "no-store",
-        headers: {
-          "Accept": "application/json"
-        }
+    const response = await fetch("/api/admin/stats", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json"
       }
-    );
+    });
 
     if (!response.ok) {
 
@@ -899,32 +1071,16 @@ async function loadStatistics() {
     }
 
     const contentType =
-      response.headers.get(
-        "content-type"
-      ) || "";
+      response.headers.get("content-type") || "";
 
-    if (
-      !contentType.includes(
-        "application/json"
-      )
-    ) {
-
-      throw new Error(
-        "Unexpected statistics response."
-      );
-
+    if (!contentType.includes("application/json")) {
+      throw new Error("Unexpected statistics response.");
     }
 
     const data = await response.json();
 
-    if (
-      data.success !== true
-    ) {
-
-      throw new Error(
-        "Statistics could not be retrieved."
-      );
-
+    if (data.success !== true) {
+      throw new Error("Statistics unavailable.");
     }
 
     const fields = [
@@ -940,88 +1096,316 @@ async function loadStatistics() {
         !Number.isSafeInteger(data[field]) ||
         data[field] < 0
       ) {
-
-        throw new Error(
-          "Invalid statistics response."
-        );
-
+        throw new Error("Invalid statistics response.");
       }
 
     }
 
-    document.getElementById(
-      "totalAppointments"
-    ).textContent = data.total;
+    document.getElementById("totalAppointments").textContent =
+      data.total;
 
-    document.getElementById(
-      "pendingAppointments"
-    ).textContent = data.pending;
+    document.getElementById("pendingAppointments").textContent =
+      data.pending;
 
-    document.getElementById(
-      "confirmedAppointments"
-    ).textContent = data.confirmed;
+    document.getElementById("confirmedAppointments").textContent =
+      data.confirmed;
 
-    document.getElementById(
-      "rejectedAppointments"
-    ).textContent = data.rejected;
+    document.getElementById("rejectedAppointments").textContent =
+      data.rejected;
 
     message.textContent =
       "Live appointment statistics loaded successfully.";
 
   } catch (error) {
 
-    console.error(
-      "Statistics loading failed:",
-      error
-    );
+    console.error("Statistics loading failed:", error);
 
     resetStatistics();
 
     message.textContent =
-      "Unable to load appointment statistics. " +
-      "Please refresh and try again.";
+      "Unable to load appointment statistics.";
 
   } finally {
 
-    refreshButton.disabled = false;
+    button.disabled = false;
+
+  }
+
+}
+
+document.getElementById("refreshStats").addEventListener(
+  "click",
+  loadStatistics
+);
+
+/* ============================================================
+   APPOINTMENT TABLE HELPERS
+   ============================================================ */
+
+function createCell(row, value, className = "") {
+
+  const cell = document.createElement("td");
+
+  cell.textContent =
+    value === null || value === undefined || value === ""
+      ? "—"
+      : String(value);
+
+  if (className) {
+    cell.className = className;
+  }
+
+  row.appendChild(cell);
+
+  return cell;
+
+}
+
+function createPatientCell(row, appointment) {
+
+  const cell = document.createElement("td");
+
+  const name = document.createElement("div");
+  name.className = "patient-name";
+  name.textContent = appointment.patient_name || "—";
+
+  const contact = document.createElement("div");
+  contact.className = "contact-details";
+
+  const email = document.createElement("div");
+  email.textContent = appointment.patient_email || "—";
+
+  const phone = document.createElement("div");
+  phone.textContent = appointment.patient_phone || "—";
+
+  contact.appendChild(email);
+  contact.appendChild(phone);
+
+  cell.appendChild(name);
+  cell.appendChild(contact);
+
+  row.appendChild(cell);
+
+}
+
+function createStatusCell(row, statusValue) {
+
+  const cell = document.createElement("td");
+
+  const badge = document.createElement("span");
+
+  const status = String(statusValue || "Unknown");
+
+  const normalized = status.toLowerCase();
+
+  badge.className = "status-badge";
+
+  if (normalized === "pending") {
+
+    badge.classList.add("status-pending");
+
+  } else if (
+    normalized === "confirmed" ||
+    normalized === "approved"
+  ) {
+
+    badge.classList.add("status-confirmed");
+
+  } else if (normalized === "rejected") {
+
+    badge.classList.add("status-rejected");
+
+  } else {
+
+    badge.classList.add("status-other");
+
+  }
+
+  badge.textContent = status;
+
+  cell.appendChild(badge);
+  row.appendChild(cell);
+
+}
+
+function showEmptyAppointments(message) {
+
+  const tbody = document.getElementById(
+    "appointmentTableBody"
+  );
+
+  tbody.replaceChildren();
+
+  const row = document.createElement("tr");
+
+  const cell = document.createElement("td");
+
+  cell.colSpan = 8;
+  cell.className = "empty-state";
+  cell.textContent = message;
+
+  row.appendChild(cell);
+  tbody.appendChild(row);
+
+}
+
+function renderAppointments(appointments) {
+
+  const tbody = document.getElementById(
+    "appointmentTableBody"
+  );
+
+  tbody.replaceChildren();
+
+  if (!appointments.length) {
+
+    showEmptyAppointments(
+      "No appointments found for the selected search or filter."
+    );
+
+    return;
+  }
+
+  for (const appointment of appointments) {
+
+    const row = document.createElement("tr");
+
+    createCell(
+      row,
+      appointment.booking_reference,
+      "booking-ref"
+    );
+
+    createPatientCell(row, appointment);
+
+    createCell(row, appointment.preferred_date);
+
+    createCell(row, appointment.preferred_time);
+
+    createCell(row, appointment.appointment_type);
+
+    createCell(
+      row,
+      appointment.selected_tests,
+      "test-name"
+    );
+
+    createStatusCell(row, appointment.status);
+
+    createCell(row, appointment.created_at);
+
+    tbody.appendChild(row);
 
   }
 
 }
 
 /* ============================================================
-   REFRESH STATISTICS BUTTON
+   APPOINTMENT PAGINATION
    ============================================================ */
 
-document.getElementById(
-  "refreshStats"
-).addEventListener(
-  "click",
-  loadStatistics
-);
+function updatePagination() {
+
+  const previousButton =
+    document.getElementById("previousPage");
+
+  const nextButton =
+    document.getElementById("nextPage");
+
+  const info =
+    document.getElementById("paginationInfo");
+
+  previousButton.disabled =
+    appointmentLoading || currentAppointmentPage <= 1;
+
+  nextButton.disabled =
+    appointmentLoading ||
+    appointmentCount < appointmentLimit;
+
+  info.textContent =
+    "Page " + currentAppointmentPage +
+    " | Showing " + appointmentCount +
+    " appointment(s)";
+
+}
 
 /* ============================================================
-   ADMIN AUTHENTICATION
+   LOAD APPOINTMENTS
    ============================================================ */
 
-async function loadAdmin() {
+async function loadAppointments(page = 1) {
 
-  const badge = document.getElementById(
-    "userBadge"
+  const message = document.getElementById(
+    "appointmentMessage"
   );
 
-  const errorBox = document.getElementById(
-    "authError"
+  const refreshButton = document.getElementById(
+    "refreshAppointments"
   );
 
-  const dashboard = document.getElementById(
-    "dashboardContent"
-  );
+  const requestId = ++appointmentRequestId;
+
+  if (
+    !authenticated ||
+    !currentAdmin ||
+    currentAdmin.role !== "super_admin"
+  ) {
+
+    appointmentsLoaded = false;
+    appointmentCount = 0;
+
+    showEmptyAppointments(
+      "Super Admin authorization is required."
+    );
+
+    message.textContent =
+      "You do not have permission to view appointments.";
+
+    updatePagination();
+
+    return;
+  }
+
+  const search = document.getElementById(
+    "appointmentSearch"
+  ).value.trim();
+
+  const status = document.getElementById(
+    "appointmentStatus"
+  ).value;
+
+  if (search.length > 100) {
+
+    message.textContent =
+      "Search must not exceed 100 characters.";
+
+    return;
+  }
+
+  appointmentLoading = true;
+  refreshButton.disabled = true;
+
+  updatePagination();
+
+  message.textContent =
+    "Loading appointments...";
 
   try {
 
+    const params = new URLSearchParams();
+
+    params.set("page", String(page));
+
+    if (search) {
+      params.set("search", search);
+    }
+
+    if (status) {
+      params.set("status", status);
+    }
+
     const response = await fetch(
-      "/api/admin/me",
+      "/api/admin/appointments?" + params.toString(),
       {
         method: "GET",
         credentials: "same-origin",
@@ -1031,6 +1415,198 @@ async function loadAdmin() {
         }
       }
     );
+
+    if (requestId !== appointmentRequestId) {
+      return;
+    }
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Appointment request failed (" +
+        response.status +
+        ")."
+      );
+
+    }
+
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if (!contentType.includes("application/json")) {
+
+      throw new Error(
+        "Unexpected appointment response."
+      );
+
+    }
+
+    const data = await response.json();
+
+    if (
+      data.success !== true ||
+      !Array.isArray(data.appointments) ||
+      !Number.isSafeInteger(data.count) ||
+      !Number.isSafeInteger(data.limit) ||
+      !Number.isSafeInteger(data.page) ||
+      data.count < 0 ||
+      data.limit < 1 ||
+      data.page < 1 ||
+      data.count > data.limit ||
+      data.appointments.length !== data.count
+    ) {
+
+      throw new Error(
+        "Invalid appointment response."
+      );
+
+    }
+
+    if (requestId !== appointmentRequestId) {
+      return;
+    }
+
+    currentAppointmentPage = data.page;
+    appointmentCount = data.count;
+    appointmentLimit = data.limit;
+
+    renderAppointments(data.appointments);
+
+    appointmentsLoaded = true;
+
+    message.textContent =
+      data.count === 0
+        ? "No matching appointments found."
+        : "Appointment records loaded successfully.";
+
+  } catch (error) {
+
+    if (requestId !== appointmentRequestId) {
+      return;
+    }
+
+    console.error(
+      "Appointment listing request failed:",
+      error.message
+    );
+
+    appointmentsLoaded = false;
+    appointmentCount = 0;
+
+    showEmptyAppointments(
+      "Unable to retrieve appointments."
+    );
+
+    message.textContent =
+      "Unable to load appointments. Please try again.";
+
+  } finally {
+
+    if (requestId === appointmentRequestId) {
+
+      appointmentLoading = false;
+      refreshButton.disabled = false;
+
+      updatePagination();
+
+    }
+
+  }
+
+}
+
+/* ============================================================
+   SEARCH AND FILTER EVENTS
+   ============================================================ */
+
+document.getElementById(
+  "appointmentSearch"
+).addEventListener("input", () => {
+
+  clearTimeout(searchTimer);
+
+  searchTimer = setTimeout(() => {
+
+    loadAppointments(1);
+
+  }, 400);
+
+});
+
+document.getElementById(
+  "appointmentStatus"
+).addEventListener("change", () => {
+
+  clearTimeout(searchTimer);
+
+  loadAppointments(1);
+
+});
+
+document.getElementById(
+  "refreshAppointments"
+).addEventListener("click", () => {
+
+  clearTimeout(searchTimer);
+
+  loadAppointments(currentAppointmentPage);
+
+});
+
+document.getElementById(
+  "previousPage"
+).addEventListener("click", () => {
+
+  if (
+    !appointmentLoading &&
+    currentAppointmentPage > 1
+  ) {
+
+    loadAppointments(currentAppointmentPage - 1);
+
+  }
+
+});
+
+document.getElementById(
+  "nextPage"
+).addEventListener("click", () => {
+
+  if (
+    !appointmentLoading &&
+    appointmentCount === appointmentLimit
+  ) {
+
+    loadAppointments(currentAppointmentPage + 1);
+
+  }
+
+});
+
+/* ============================================================
+   ADMIN AUTHENTICATION
+   ============================================================ */
+
+async function loadAdmin() {
+
+  const badge = document.getElementById("userBadge");
+
+  const errorBox = document.getElementById("authError");
+
+  const dashboard = document.getElementById(
+    "dashboardContent"
+  );
+
+  try {
+
+    const response = await fetch("/api/admin/me", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/json"
+      }
+    });
 
     if (!response.ok) {
 
@@ -1043,15 +1619,9 @@ async function loadAdmin() {
     }
 
     const contentType =
-      response.headers.get(
-        "content-type"
-      ) || "";
+      response.headers.get("content-type") || "";
 
-    if (
-      !contentType.includes(
-        "application/json"
-      )
-    ) {
+    if (!contentType.includes("application/json")) {
 
       throw new Error(
         "Unexpected authentication response."
@@ -1064,9 +1634,7 @@ async function loadAdmin() {
     if (
       admin.success !== true ||
       admin.authenticated !== true ||
-      !["super_admin", "staff"].includes(
-        admin.role
-      )
+      !["super_admin", "staff"].includes(admin.role)
     ) {
 
       throw new Error(
@@ -1076,16 +1644,12 @@ async function loadAdmin() {
     }
 
     authenticated = true;
-
     currentAdmin = admin;
 
-    document.getElementById(
-      "adminEmail"
-    ).textContent = admin.email;
+    document.getElementById("adminEmail").textContent =
+      admin.email;
 
-    document.getElementById(
-      "adminRole"
-    ).textContent =
+    document.getElementById("adminRole").textContent =
       admin.role === "super_admin"
         ? "Super Administrator"
         : "Staff";
@@ -1095,49 +1659,36 @@ async function loadAdmin() {
         ? "Super Admin"
         : "Staff";
 
-    dashboard.classList.remove(
-      "hidden"
-    );
-
-    errorBox.classList.add(
-      "hidden"
-    );
+    dashboard.classList.remove("hidden");
+    errorBox.classList.add("hidden");
 
     showPage("overview");
-
-    /* Load statistics only after authentication */
 
     await loadStatistics();
 
   } catch (error) {
 
     authenticated = false;
-
     currentAdmin = null;
 
     resetStatistics();
 
-    badge.textContent =
-      "Access Not Verified";
+    badge.textContent = "Access Not Verified";
 
-    dashboard.classList.add(
-      "hidden"
-    );
+    dashboard.classList.add("hidden");
 
     errorBox.textContent =
       error.message +
       " Please sign in through Cloudflare Access and try again.";
 
-    errorBox.classList.remove(
-      "hidden"
-    );
+    errorBox.classList.remove("hidden");
 
   }
 
 }
 
 /* ============================================================
-   INITIALIZE DASHBOARD
+   INITIALIZE
    ============================================================ */
 
 loadAdmin();
