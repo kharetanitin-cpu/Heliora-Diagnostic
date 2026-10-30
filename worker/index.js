@@ -977,7 +977,152 @@ if (!validTestSecret(request, env)) {
 // ADMIN DASHBOARD — APPOINTMENT STATISTICS
 // STAGING ONLY — READ-ONLY
 // ============================================================
+// ============================================================
+// ADMIN DASHBOARD — APPOINTMENT LISTING
+// STAGING ONLY — READ-ONLY
+// ============================================================
 
+if (path === "/api/admin/appointments") {
+
+  // Restrict access to staging.
+  if (
+    url.hostname !==
+    "heliora-care-staging.kharetanitin.workers.dev"
+  ) {
+    return json({ error: "Not found" }, 404);
+  }
+
+  // Only GET requests are permitted.
+  if (request.method !== "GET") {
+    return json(
+      { error: "Method not allowed" },
+      405,
+      { allow: "GET" }
+    );
+  }
+
+  // Verify Cloudflare Access JWT and active staff account.
+  const admin = await verifyAdminAccess(request, env);
+
+  if (!admin) {
+    return json({ error: "Unauthorized" }, 401);
+  }
+
+  // Restrict patient information to Super Admin for now.
+  if (admin.role !== "super_admin") {
+    return json({ error: "Forbidden" }, 403);
+  }
+
+  // Search and filter parameters.
+  const search = (url.searchParams.get("search") || "").trim();
+  const status = (url.searchParams.get("status") || "").trim();
+
+  // Limit search input.
+  if (search.length > 100) {
+    return json({ error: "Search is too long" }, 400);
+  }
+
+  // Allow only supported status filters.
+  const allowedStatuses = [
+    "",
+    "pending",
+    "confirmed",
+    "rejected"
+  ];
+
+  if (!allowedStatuses.includes(status.toLowerCase())) {
+    return json({ error: "Invalid status filter" }, 400);
+  }
+
+  // Pagination: maximum 50 appointments per request.
+  const limit = 20;
+  const pageInput = url.searchParams.get("page") || "1";
+  const page = Number(pageInput);
+
+  if (
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    page > 10000
+  ) {
+    return json({ error: "Invalid page number" }, 400);
+  }
+
+  const offset = (page - 1) * limit;
+
+  try {
+
+    // Escape LIKE wildcards so searches are predictable.
+    const escapedSearch = search
+      .replace(/[\\%_]/g, "\\$&");
+
+    const searchPattern = `%${escapedSearch}%`;
+
+    const statusFilter = status.toLowerCase();
+
+    const { results } = await env.DB.prepare(`
+      SELECT
+        a.id,
+        a.booking_reference,
+        a.patient_name,
+        a.patient_email,
+        a.patient_phone,
+        a.appointment_type,
+        a.preferred_date,
+        a.preferred_time,
+        a.status,
+        a.created_at,
+        (
+          SELECT GROUP_CONCAT(dt.test_name, ', ')
+          FROM appointment_tests at
+          JOIN diagnostic_tests dt
+            ON dt.id = at.test_id
+          WHERE at.appointment_id = a.id
+        ) AS selected_tests
+      FROM appointments a
+      WHERE
+        (
+          ? = ''
+          OR a.patient_name LIKE ? ESCAPE '\\'
+          OR a.booking_reference LIKE ? ESCAPE '\\'
+        )
+        AND
+        (
+          ? = ''
+          OR LOWER(a.status) = ?
+        )
+      ORDER BY a.id DESC
+      LIMIT ? OFFSET ?
+    `).bind(
+      search,
+      searchPattern,
+      searchPattern,
+      statusFilter,
+      statusFilter,
+      limit,
+      offset
+    ).all();
+
+    return json({
+      success: true,
+      page,
+      limit,
+      count: results.length,
+      appointments: results
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Admin appointment listing error:",
+      error.message
+    );
+
+    return json({
+      error: "Unable to retrieve appointments"
+    }, 503);
+
+  }
+}
 if (path === "/api/admin/stats") {
 
   // Restrict this endpoint to the staging environment.
